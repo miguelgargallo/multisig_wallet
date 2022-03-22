@@ -1,4 +1,4 @@
-Study cases of MultiSigWallet contract, from Solidity by example site [Solidity by Example, Multi-Sig Wallet](https://solidity-by-example.org/app/multi-sig-wallet/)
+Study case of MultiSigWallet contract, from Solidity by example site [Solidity by Example, Multi-Sig Wallet](https://solidity-by-example.org/app/multi-sig-wallet/)
 
 I used brownie with hardhat in order to deploy and use the console.log features.
 You should start the hardhat node in another terminal and folder (`hh node`), then, in a terminal :
@@ -9,22 +9,21 @@ brownie run scripts/deploy.py
 ```
 
 The code is filled with console.log calls in order to see the different calls and the execution of functions.
-Attention, in the example site, the TestContract.callMe() function is not declared payable, so the low-level call in MultiSigWallet.executeTransaction will fail because it tries to send ether using transaction.value parameter.
 
-The MultiSigWallet is allowing to encode a transaction against another contract, to confirm it using multisignatures from his owners and to submit and execute the transaction on the other contract using low-level call.
+The MultiSigWallet is allowing to encode a transaction against another contract, to confirm it using multisignatures from his owners and to submit and execute this transaction on the other contract using low-level call.
 
 In the deploy.py script, a transaction with a call to the TestContract.callMe is encoded and executed.
 
 For obtaining the signature of the solidity function call, we use Web3.keccak function.
 For parameters encoding, encode_abi function from python's eth_abi package.
-The signature together with the parameters encoded are submitted to the solidity call function :
+The signature together with the parameters encoded are submitted to the solidity call function as payload:
 
 ```solidity
 (bool success, bytes memory returnData) = address(contract).call(payload);
 require(success);
 ```
 
-Here is the relevant code in Python:
+Here is the relevant Python code (using brownie):
 
 ```python
     func_signature = Web3.keccak(text="callMe(uint256,uint256)")[:4].hex()
