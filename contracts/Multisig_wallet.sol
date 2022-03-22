@@ -148,10 +148,11 @@ contract MultiSigWallet {
             transaction.value
         );
         console.logBytes(transaction.data);
-        (bool success, ) = transaction.to.call{value: transaction.value}(
-            transaction.data
-        );
-
+        (bool success, bytes memory returnData) = transaction.to.call{
+            value: transaction.value
+        }(transaction.data);
+        console.log("returnData=");
+        console.logBytes(returnData);
         require(success, "tx failed");
 
         emit ExecuteTransaction(msg.sender, _txIndex);
@@ -209,14 +210,38 @@ contract TestContract {
 
     fallback() external payable {
         console.log("TestContract.fallback()");
+        console.logBytes(msg.data);
     }
 
-    function callMe(uint256 j) public payable {
-        console.log("TestContract.callMe(%d) called", j);
+    receive() external payable {
+        console.log("TestContract.receive()");
+    }
+
+    function callMe(uint256 j, uint256 a) public payable {
+        console.log("TestContract.callMe(%d,%d) called", j, a);
         i += j;
     }
 
-    function getData(uint256 j) public pure returns (bytes memory) {
-        return abi.encodeWithSignature("callMe(uint256)", j);
+    function getData(uint256 j, uint256 a) public view returns (bytes memory) {
+        console.log("callMe(uint256,uint256),j,a encoded:");
+        console.logBytes(
+            abi.encodeWithSignature("callMe(uint256,uint256)", j, a)
+        );
+        return abi.encodeWithSignature("callMe(uint256,uint256)", j, a);
+    }
+
+    function callMeString(string memory abc) public payable {
+        console.log("TestContract.callMeString('%s') called", abc);
+        i++;
+    }
+
+    function getDataString(string memory abc)
+        public
+        view
+        returns (bytes memory)
+    {
+        console.log("callMeString(string),abc encoded:");
+        console.logBytes(abi.encodeWithSignature("callMeString(string)", abc));
+        return abi.encodeWithSignature("callMeString(string)", abc);
     }
 }

@@ -1,6 +1,6 @@
-from brownie import accounts,  MultiSigWallet, TestContract
+from brownie import convert, accounts,  MultiSigWallet, TestContract
 from web3 import Web3
-import pytest
+import eth_abi
 
 
 def main():
@@ -8,7 +8,7 @@ def main():
     print_values()
     fund_contract()
     print_values()
-    tx = create_and_confirm_tx(123)
+    tx = create_and_confirm_tx(567)
     execute_tx(tx, accounts[1])
     print_values()
 
@@ -42,8 +42,8 @@ def deploy_contracts():
 
 def fund_contract():
     msw = get_msw()
-    print("Funding MultiSigWallet with 5 ether from a[0]...")
-    accounts[0].transfer(msw.address, "5 ether")
+    print("Funding MultiSigWallet with 1 ether from a[0]...")
+    accounts[0].transfer(msw.address, "1 ether")
     print("Funded")
 
 
@@ -53,8 +53,30 @@ def create_and_confirm_tx(tr_value):
 
     print("Create a transaction from a[0]...")
     tr_1_ether = Web3.toWei(1, "ether")
+
+    func_signature = Web3.keccak(text="callMe(uint256,uint256)")[:4].hex()
+    var1 = tr_value
+    var2 = 10000
+    params_encoded = eth_abi.encode_abi(
+        ["uint256", "uint256"], [var1, var2]).hex()
+    calldata_encoded = func_signature+params_encoded
+    print(calldata_encoded)
+    solidity_encoded = t.getData(var1, var2)
+    print(solidity_encoded)
+    assert solidity_encoded == calldata_encoded
+
+    # in the case we want to test the encoding of string
+    # func_signature = Web3.keccak(text="callMeString(string)")[:4].hex()
+    # var1 = "test"
+    # params_encoded = eth_abi.encode_abi(["string"], [var1]).hex()
+    # calldata_encoded = func_signature+params_encoded
+    # print(calldata_encoded)
+    # solidity_encoded = t.getDataString(var1)
+    # print(solidity_encoded)
+    # assert solidity_encoded == calldata_encoded
+
     tx = msw.submitTransaction(
-        t.address, tr_1_ether, t.getData(tr_value), {"from": accounts[0]})
+        t.address, tr_1_ether, calldata_encoded, {"from": accounts[0]})
     tx.wait(1)
     owners, numConfirm = params_msw()
     for i in range(0, numConfirm):
