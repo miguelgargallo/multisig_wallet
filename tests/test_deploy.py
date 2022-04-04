@@ -1,104 +1,99 @@
-from brownie import accounts, MultiSigWallet, TestContract
-from scripts.deploy import fund_contract
+from brownie import Wei, accounts, MultiSigWallet, TestContract
+from scripts.deploy import params_msw, deploy_contracts, fund_contract, create_and_confirm_tx, execute_tx, print_values
 from web3 import Web3
 import pytest
+import random
 
 
-def params_msw(num_owners):
-    owners = []
-    for i in range(0, num_owners):
-        owners.append(accounts[i].address)
-    numConfirm = len(owners)-1
-    return owners, numConfirm
-
-
-def deploy_msw(numOwners):
-    owners, numConfirm = params_msw(numOwners)
-    msw = MultiSigWallet.deploy(owners, numConfirm, {"from": accounts[0]})
-    return msw
-
-
-def deploy_t():
-    t = TestContract.deploy({"from": accounts[0]})
-    return t
-
-
-def test_deploy_msw():
+@pytest.fixture
+def deploy_contracts_fixture():
     # arrange/act
-    msw = deploy_msw(3)
+    multiSigWallet, testContract = deploy_contracts(accounts[0])
     # assert
-    assert msw is not None
+    assert multiSigWallet is not None and testContract is not None
+    return multiSigWallet, testContract
 
 
-def test_deploy_t():
-    # arrange/act
-    t = deploy_t()
-    # assert
-    assert t is not None
-
-
-def test_fund_contract():
+def test_fund_contract(deploy_contracts_fixture):
     # arrange
-    msw = deploy_msw(3)
+    multiSigWallet, testContract = deploy_contracts_fixture
     # act
-    fund_contract()
+    howMuch = "1 gwei"
+    who_funds = accounts[0]
+    fund_contract(multiSigWallet, howMuch, who_funds)
     # assert
-    assert msw.balance() == Web3.toWei(5, "ether")
+    assert multiSigWallet.balance() == Wei(howMuch)
 
 
-def test_create_tx():
+def test_create_tx(deploy_contracts_fixture):
     # arrange
-    msw = deploy_msw(3)
-    t = deploy_t()
+    multiSigWallet, testContract = deploy_contracts_fixture
     # act
-    tr_1_ether = Web3.toWei(1, "ether")
-    tr_value = 123
-    tx = msw.submitTransaction(
-        t.address, tr_1_ether, t.getData(tr_value), {"from": accounts[0]})
+    transaction_value = Web3.toWei(1, "gwei")
+    param1 = random.randint(0, 1000)
+    param2 = random.randint(0, 2000)
+    calldata_encoded = testContract.callMe.encode_input(param1, param2)
+    tx = multiSigWallet.submitTransaction(
+        testContract.address, transaction_value, calldata_encoded, {"from": accounts[0]})
     tx.wait(1)
     # assert
-    assert msw.getTransactionCount() == 1
+    assert multiSigWallet.getTransactionCount() == 1
 
 
-def test_confirm_tx():
+def test_confirm_revoke_tx(deploy_contracts_fixture):
     # arrange
-    msw = deploy_msw(3)
-    t = deploy_t()
+    multiSigWallet, testContract = deploy_contracts_fixture
     # act
-    tr_1_ether = Web3.toWei(1, "ether")
-    tr_value = 123
-    tx = msw.submitTransaction(
-        t.address, tr_1_ether, t.getData(tr_value), {"from": accounts[0]})
+    transaction_value = Web3.toWei(1, "gwei")
+    param1 = random.randint(0, 1000)
+    param2 = random.randint(0, 2000)
+    calldata_encoded = testContract.callMe.encode_input(param1, param2)
+    tx = multiSigWallet.submitTransaction(
+        testContract.address, transaction_value, calldata_encoded, {"from": accounts[0]})
     tx.wait(1)
-    tx_count = msw.getTransactionCount()-1
-    tx_confirm = msw.confirmTransaction(tx_count, {"from": accounts[0]})
+    tx_index = tx.return_value
+
+    tx_confirm = multiSigWallet.confirmTransaction(
+        tx_index, {"from": accounts[0]})
     tx_confirm.wait(1)
     # assert
-    assert msw.isConfirmed(tx_count, accounts[0].address) == True
+    assert multiSigWallet.isConfirmed(tx_index, accounts[0].address) == True
+    assert multiSigWallet.isConfirmed(tx_index, accounts[1].address) == False
+    assert multiSigWallet.isConfirmed(tx_index, accounts[2].address) == False
+    tx_revoke = multiSigWallet.revokeConfirmation(
+        tx_index, {"from": accounts[0]})
+    tx_revoke.wait(1)
+    assert multiSigWallet.isConfirmed(tx_index, accounts[0].address) == False
+    assert multiSigWallet.isConfirmed(tx_index, accounts[1].address) == False
+    assert multiSigWallet.isConfirmed(tx_index, accounts[2].address) == False
 
 
-def test_execute_tx():
+def test_execute_tx(deploy_contracts_fixture):
     # arrange
-    msw = deploy_msw(3)
-    t = deploy_t()
-    fund_contract()
-    # act
-    tr_1_ether = Web3.toWei(1, "ether")
-    tr_value = 123
-    tx = msw.submitTransaction(
-        t.address, tr_1_ether, t.getData(tr_value), {"from": accounts[0]})
-    tx.wait(1)
-    tx_count = msw.getTransactionCount()-1
-    print(tx_count)
-    tx_confirm = msw.confirmTransaction(tx_count, {"from": accounts[0]})
-    tx_confirm.wait(1)
-    tx_confirm = msw.confirmTransaction(tx_count, {"from": accounts[1]})
-    tx_confirm.wait(1)
+    multiSigWallet, testContract = deploy_contracts_fixture
+    howMuch = "1 gwei"
+    who_funds = accounts[0]
+    fund_contract(multiSigWallet, howMuch, who_funds)
 
-    tx = msw.executeTransaction(tx_count, {"from": accounts[0]})
+    transaction_value = Web3.toWei(1, "gwei")
+    param1 = random.randint(0, 1000)
+    param2 = random.randint(0, 2000)
+    calldata_encoded = testContract.callMe.encode_input(param1, param2)
+    tx = multiSigWallet.submitTransaction(
+        testContract.address, transaction_value, calldata_encoded, {"from": accounts[0]})
+    tx.wait(1)
+    tx_index = tx.return_value
+    owners, numConfirm = params_msw()
+    for i in range(0, numConfirm):
+        tx_confirm = multiSigWallet.confirmTransaction(0, {"from": owners[i]})
+        tx_confirm.wait(1)
+
+    # act
+    tx = multiSigWallet.executeTransaction(tx_index, {"from": accounts[0]})
     tx.wait(1)
 
     # assert
     executed = False
-    _address, _value, _data, executed, _numConf = msw.getTransaction(tx_count)
+    _address, _value, _data, executed, _numConf = multiSigWallet.getTransaction(
+        tx_index)
     assert executed == True

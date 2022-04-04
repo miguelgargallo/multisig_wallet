@@ -1,16 +1,21 @@
 from brownie import convert, accounts,  MultiSigWallet, TestContract
 from web3 import Web3
 import eth_abi
+import random
+
+DECIMALS = 10**18
 
 
 def main():
-    deploy_contracts()
-    print_values()
-    fund_contract()
-    print_values()
-    tx = create_and_confirm_tx(567)
-    execute_tx(tx, accounts[1])
-    print_values()
+    multiSigWallet, testContract = deploy_contracts(accounts[0])
+    print_values(multiSigWallet, testContract)
+    fund_contract(multiSigWallet, "1 gwei", accounts[0])
+    print_values(multiSigWallet, testContract)
+    randomValue = random.randint(0, 1000)
+    tx = create_and_confirm_tx(
+        multiSigWallet, testContract, randomValue, accounts[0])
+    execute_tx(tx, multiSigWallet, accounts[1])
+    print_values(multiSigWallet, testContract)
 
 
 def params_msw():
@@ -19,86 +24,96 @@ def params_msw():
     return owners, numConfirm
 
 
-def get_msw():
-    return MultiSigWallet[-1]
-
-
-def get_t():
-    return TestContract[-1]
-
-
-def deploy_contracts():
+def deploy_contracts(who_deploys):
     owners, numConfirm = params_msw()
 
     print("Deploying MultiSigWallet contract...")
-    msw = MultiSigWallet.deploy(owners, numConfirm, {"from": accounts[0]})
-    print(f"MultiSigWallet contract deployed at {msw}")
+    multiSigWallet = MultiSigWallet.deploy(
+        owners, numConfirm, {"from": who_deploys})
+    print(f"MultiSigWallet contract deployed at {multiSigWallet}")
 
     print("Deploying TestContract contract...")
-    t = TestContract.deploy({"from": accounts[0]})
-    print(f"TestContract deployed at {t}")
-    return msw, t
+    testContract = TestContract.deploy({"from": who_deploys})
+    print(f"TestContract deployed at {testContract}")
+    return multiSigWallet, testContract
 
 
-def fund_contract():
-    msw = get_msw()
-    print("Funding MultiSigWallet with 1 ether from a[0]...")
-    accounts[0].transfer(msw.address, "1 ether")
+def fund_contract(_multiSigWallet, howMuch, who_funds):
+    print(f"Funding MultiSigWallet with {howMuch} from {who_funds}...")
+    who_funds.transfer(_multiSigWallet.address, howMuch)
     print("Funded")
 
 
-def create_and_confirm_tx(tr_value):
-    msw = get_msw()
-    t = get_t()
+def create_and_confirm_tx(multiSigWallet, againstContract, random_value, who_create):
+    print(f"Create a transaction from {who_create}...")
+    transaction_value = Web3.toWei(1, "gwei")
+    param1 = random_value
+    param2 = random.randint(0, 2000)
 
-    print("Create a transaction from a[0]...")
-    tr_1_ether = Web3.toWei(1, "ether")
-
-    func_signature = Web3.keccak(text="callMe(uint256,uint256)")[:4].hex()
-    var1 = tr_value
-    var2 = 10000
-    params_encoded = eth_abi.encode_abi(
-        ["uint256", "uint256"], [var1, var2]).hex()
-    calldata_encoded = func_signature+params_encoded
-    print(calldata_encoded)
-    solidity_encoded = t.getData(var1, var2)
-    print(solidity_encoded)
-    assert solidity_encoded == calldata_encoded
-
-    # in the case we want to test the encoding of string
-    # func_signature = Web3.keccak(text="callMeString(string)")[:4].hex()
-    # var1 = "test"
-    # params_encoded = eth_abi.encode_abi(["string"], [var1]).hex()
+    # This is how we can manually encode the function call and the parameters
+    # func_signature = Web3.keccak(text="callMe(uint256,uint256)")[:4].hex()
+    # params_encoded = eth_abi.encode_abi(
+    #     ["uint256", "uint256"], [var1, var2]).hex()
     # calldata_encoded = func_signature+params_encoded
     # print(calldata_encoded)
-    # solidity_encoded = t.getDataString(var1)
+    # solidity_encoded = againstContract.getData(var1, var2)
     # print(solidity_encoded)
     # assert solidity_encoded == calldata_encoded
 
-    tx = msw.submitTransaction(
-        t.address, tr_1_ether, calldata_encoded, {"from": accounts[0]})
+    # This is how we encode using contract.method.encode_input
+    #solidity_encoded = againstContract.getData(var1, var2)
+    calldata_encoded = againstContract.callMe.encode_input(param1, param2)
+    #print(f"calldata ={calldata_encoded}")
+    #assert solidity_encoded == calldata_encoded
+
+    # in the case we want to test the encoding of string parameter
+    # encoding done manually
+    # func_signature = Web3.keccak(text="callMeString(string)")[:4].hex()
+    # paramString1 = "test"
+    # params_encoded = eth_abi.encode_abi(["string"], [paramString1]).hex()
+    # calldata_encoded = func_signature+params_encoded
+    # print(calldata_encoded)
+
+    # print(solidity_encoded)
+    # solidity_encoded = againstContract.getDataString(paramString1)
+    # or encoding done with contract.method.encode_input
+    # calldata_encoded = againstContract.callMeString.encode_input(paramString1)
+    # assert solidity_encoded == calldata_encoded
+
+    tx = multiSigWallet.submitTransaction(
+        againstContract.address, transaction_value, calldata_encoded, {"from": who_create})
     tx.wait(1)
     owners, numConfirm = params_msw()
     for i in range(0, numConfirm):
         print(f"Confirming transaction {tx.txid} from {owners[i]}...")
-        tx_confirm = msw.confirmTransaction(0, {"from": owners[i]})
+        tx_confirm = multiSigWallet.confirmTransaction(0, {"from": owners[i]})
         tx_confirm.wait(1)
         print(f"Confirmed transaction {tx.txid}")
-    return msw.getTransactionCount()-1
+    return multiSigWallet.getTransactionCount()-1
 
 
-def execute_tx(tx_index, from_account):
-    msw = get_msw()
-    print(f"Executing transaction {tx_index} from a[1]...")
-    tx = msw.executeTransaction(tx_index, {"from": from_account})
+def execute_tx(tx_index, wallet, who_executes):
+    print("-------------------------------")
+    print(f"Executing transaction {tx_index} from {who_executes}...")
+    _to, _value, _data, _executed, _numConfirmations = wallet.getTransaction(
+        tx_index, {"from": who_executes})
+    print(f" - to:{_to}")
+    print(f" - value:{_value/DECIMALS} ether")
+    print(f" - data:{_data}")
+    calldata = TestContract[-1].callMe.decode_input(_data)
+    # #calldata = TestContract[-1].callMeString.decode_input(_data)
+    print(f" - data decoded:{calldata}")
+    print(f" - executed:{_executed}")
+    print(f" - numConfirmations:{_numConfirmations}")
+    print("-------------------------------")
+    tx = wallet.executeTransaction(tx_index, {"from": who_executes})
     tx.wait(1)
-    print("Executed!")
+    print(f"Transaction #{tx_index} executed, the return is {tx.return_value}")
 
 
-def print_values():
-    msw = get_msw()
-    t = get_t()
-    print(f"Now, TestContract.i is {t.i()}")
-    print(f"Now, TestContract.balance is {t.balance()}")
-    print(f"Now, MultiSigWallet.balance is {msw.balance()}")
-    print(f"Now, accounts[0].balance is {accounts[0].balance()}")
+def print_values(msw, testC):
+    print(f"Now, TestContract.i is {testC.i()}")
+    print(f"Now, TestContract.balance is {testC.balance()/DECIMALS} ether")
+    print(f"Now, MultiSigWallet.balance is {msw.balance()/DECIMALS} ether")
+    print(
+        f"Now, accounts[0].balance is {accounts[0].balance()/DECIMALS} ether")
