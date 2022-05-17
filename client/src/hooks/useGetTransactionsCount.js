@@ -1,26 +1,31 @@
-import { useNetwork, useContractRead } from "wagmi";
-import { useIsMounted } from "../hooks";
+import { useContractRead } from "wagmi";
 import { BigNumber } from "ethers";
 
-const useGetTransactionsCount = (contractAddress, contractABI) => {
-  const isMounted = useIsMounted();
-  const { activeChain } = useNetwork();
+const useGetTransactionsCount = (
+  _activeChain,
+  _contractAddress,
+  _contractABI
+) => {
   const {
     data: transactionsCount,
     isError: isErrortransactionsCount,
     isLoading: isLoadingtransactionsCount,
   } = useContractRead(
     {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
+      addressOrName: _contractAddress,
+      contractInterface: _contractABI,
     },
     "getTransactionCount",
     {
-      enabled: Boolean(activeChain),
+      enabled: Boolean(_activeChain),
     }
   );
 
-  if (!isMounted || isErrortransactionsCount || isLoadingtransactionsCount)
+  if (
+    isErrortransactionsCount ||
+    isLoadingtransactionsCount ||
+    !transactionsCount
+  )
     return BigNumber.from("0");
 
   return transactionsCount;

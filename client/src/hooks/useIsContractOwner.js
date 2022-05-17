@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNetwork, useAccount, useContractRead } from "wagmi";
-import { useIsMounted } from "../hooks";
 import { constants } from "ethers";
 
-const useIsContractOwner = (contractAddress, contractABI) => {
-  const isMounted = useIsMounted();
+const useIsContractOwner = (_contractAddress, _contractABI) => {
   const [runOwner, setRunOwner] = useState(false);
   const { activeChain } = useNetwork();
 
@@ -13,7 +11,7 @@ const useIsContractOwner = (contractAddress, contractABI) => {
     isError: isErrorAccount,
     isLoading: isLoadingAccount,
   } = useAccount({
-    enabled: Boolean(activeChain && contractAddress !== constants.AddressZero),
+    enabled: Boolean(activeChain && _contractAddress !== constants.AddressZero),
   });
   const {
     data: ContractOwner,
@@ -21,15 +19,15 @@ const useIsContractOwner = (contractAddress, contractABI) => {
     isLoading: isLoadingContractOwner,
   } = useContractRead(
     {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
+      addressOrName: _contractAddress,
+      contractInterface: _contractABI,
     },
     "owner",
     {
       enabled: Boolean(
         activeChain &&
           account &&
-          contractAddress !== constants.AddressZero &&
+          _contractAddress !== constants.AddressZero &&
           runOwner
       ),
       watch: true,
@@ -39,10 +37,9 @@ const useIsContractOwner = (contractAddress, contractABI) => {
   useEffect(() => {
     if (!runOwner) setRunOwner(true);
     // eslint-disable-next-line
-  }, [account, contractAddress]);
+  }, [account, _contractAddress]);
 
   if (
-    !isMounted ||
     !activeChain ||
     !account ||
     isErrorAccount ||

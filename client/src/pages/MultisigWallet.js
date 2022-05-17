@@ -17,7 +17,7 @@ import {
   useToken,
 } from "wagmi";
 
-import { constants, utils } from "ethers";
+import { BigNumber, constants, utils } from "ethers";
 
 import { useIsMounted, useIsOwner, useGetTransactionsCount } from "../hooks";
 import { SupportedNetworks, GetContract, GetStatusIcon } from "../components";
@@ -54,18 +54,12 @@ const Multisig = () => {
     }
   );
 
-  const isOwner = useIsOwner(contractAddress, contractABI);
+  const isOwner = useIsOwner(activeChain, contractAddress, contractABI);
   const transactionsCount = useGetTransactionsCount(
+    activeChain,
     contractAddress,
     contractABI
   );
-
-  useEffect(() => {
-    if (activeChain && account && contractAddress !== constants.AddressZero) {
-      //getNumConfirmationsRequired();
-    }
-    // eslint-disable-next-line
-  }, [account]);
 
   if (!isMounted) return <>not mounted</>;
   if (!activeChain) return <SupportedNetworks />;
