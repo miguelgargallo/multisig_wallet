@@ -1,5 +1,7 @@
 from brownie import convert, accounts,  MultiSigWallet, TestContract
 from web3 import Web3
+from scripts.helpful_scripts import get_account, update_front_end
+
 import eth_abi
 import random
 
@@ -7,13 +9,14 @@ DECIMALS = 10**18
 
 
 def main():
-    multiSigWallet, testContract = deploy_contracts(accounts[0])
+    multiSigWallet, testContract = deploy_contracts(
+        get_account(), update_frontend_flag=True)
     print_values(multiSigWallet, testContract)
-    fund_contract(multiSigWallet, "1 gwei", accounts[0])
+    fund_contract(multiSigWallet, "1 gwei", get_account())
     print_values(multiSigWallet, testContract)
     randomValue = random.randint(0, 1000)
     tx = create_and_confirm_tx(
-        multiSigWallet, testContract, randomValue, accounts[0])
+        multiSigWallet, testContract, randomValue, get_account())
     execute_tx(tx, multiSigWallet, accounts[1])
     print_values(multiSigWallet, testContract)
 
@@ -24,7 +27,7 @@ def params_msw():
     return owners, numConfirm
 
 
-def deploy_contracts(who_deploys):
+def deploy_contracts(who_deploys, update_frontend_flag=True):
     owners, numConfirm = params_msw()
 
     print("Deploying MultiSigWallet contract...")
@@ -35,6 +38,8 @@ def deploy_contracts(who_deploys):
     print("Deploying TestContract contract...")
     testContract = TestContract.deploy({"from": who_deploys})
     print(f"TestContract deployed at {testContract}")
+    if update_frontend_flag:
+        update_front_end()
     return multiSigWallet, testContract
 
 
