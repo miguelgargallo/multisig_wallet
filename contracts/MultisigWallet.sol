@@ -155,6 +155,7 @@ contract MultiSigWallet {
     }
 
 
+
     function getTransaction(uint256 _txIndex)
         public
         view

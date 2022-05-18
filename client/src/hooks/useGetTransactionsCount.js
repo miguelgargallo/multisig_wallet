@@ -1,5 +1,5 @@
 import { useContractRead } from "wagmi";
-import { BigNumber } from "ethers";
+import { BigNumber, constants } from "ethers";
 
 const useGetTransactionsCount = (
   _activeChain,
@@ -17,7 +17,10 @@ const useGetTransactionsCount = (
     },
     "getTransactionCount",
     {
-      enabled: Boolean(_activeChain),
+      watch: true,
+      enabled: Boolean(
+        _activeChain && _contractAddress !== constants.AddressZero
+      ),
     }
   );
 

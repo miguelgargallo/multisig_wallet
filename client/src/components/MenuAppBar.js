@@ -23,7 +23,7 @@ const MenuAppBar = () => {
             </IconButton>
           </a>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Ethereum Application
+            Multisignature Wallet
           </Typography>
           <ConnectButton />
         </Toolbar>

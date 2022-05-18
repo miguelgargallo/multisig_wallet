@@ -1,7 +1,8 @@
 import { useNetwork } from "wagmi";
 import { constants } from "ethers";
 
-import contractJson from "../chain-info/MultiSigWallet.json";
+import contractMultisigWallet from "../chain-info/MultiSigWallet.json";
+import contractTestContract from "../chain-info/TestContract.json";
 import networkMapping from "../chain-info/map.json";
 
 const GetContract = (contractName) => {
@@ -16,7 +17,8 @@ const GetContract = (contractName) => {
       : constants.AddressZero;
   }
 
-  const { abi } = contractJson;
+  const { abi } = contractMultisigWallet;
+
   if (!activeChain)
     return { contractAddress: constants.AddressZero, contractABI: abi };
 

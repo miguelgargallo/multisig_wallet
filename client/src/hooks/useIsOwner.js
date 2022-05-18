@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useAccount, useContractRead } from "wagmi";
 import { constants } from "ethers";
 

@@ -12,7 +12,7 @@ def main():
     multiSigWallet, testContract = deploy_contracts(
         get_account(), update_frontend_flag=True)
     print_values(multiSigWallet, testContract)
-    fund_contract(multiSigWallet, "1 gwei", get_account())
+    fund_contract(multiSigWallet, "5 gwei", get_account())
     print_values(multiSigWallet, testContract)
     randomValue = random.randint(0, 1000)
     tx = create_and_confirm_tx(
