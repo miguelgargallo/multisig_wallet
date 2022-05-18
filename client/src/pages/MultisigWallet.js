@@ -37,8 +37,10 @@ import {
   GetOwner,
   GetStatusIcon,
 } from "../components";
+import { useIsMounted } from "../hooks";
 
 const Multisig = () => {
+  const isMounted = useIsMounted();
   const { activeChain } = useNetwork();
   const [disabled, setDisabled] = useState(false);
 
@@ -47,8 +49,8 @@ const Multisig = () => {
     GetContractTestContract("TestContract");
   const ifaceContractTest = new utils.Interface(contractABITest);
   const [address, setAddress] = useState(contractAddressTest);
-  const [param1, setParam1] = useState("");
-  const [param2, setParam2] = useState("");
+  const [param1, setParam1] = useState("0");
+  const [param2, setParam2] = useState("0");
   const [value1, setValue1] = useState("0");
   const {
     data: account,
@@ -128,7 +130,6 @@ const Multisig = () => {
   const ownersArray = [
     ...Array.from({ length: parseInt(ownersCount) }, (_, idx) => `${++idx}`),
   ];
-
   const handleValue = (e) => {
     try {
       const localvalue = utils.parseEther(e.currentTarget.value);
@@ -165,14 +166,6 @@ const Multisig = () => {
 
   //  useEffect(() => {}, [handleClick, handleValue]);
 
-  if (!activeChain) return <SupportedNetworks />;
-  if (isLoadingAccount) return <div>Loading account…</div>;
-  if (isErrorAccount) return <div>Error loading account</div>;
-  if (contractAddress === constants.AddressZero)
-    return (
-      <div>Contract not deployed on this network : {activeChain?.name}</div>
-    );
-
   const fundContract = () => {
     setDisabled(true);
     FundContract({
@@ -204,11 +197,18 @@ const Multisig = () => {
 
   const testContracts = [
     {
-      code: contractAddressTest,
-      label: "TestContract.callMe(uint256 j, uint256 a)",
       value: contractAddressTest,
+      label: "TestContract.callMe(uint256 j, uint256 a)",
     },
   ];
+  if (!isMounted) return <></>;
+  if (!activeChain) return <SupportedNetworks />;
+  if (isLoadingAccount) return <div>Loading account…</div>;
+  if (isErrorAccount) return <div>Error loading account</div>;
+  if (contractAddress === constants.AddressZero)
+    return (
+      <div>Contract not deployed on this network : {activeChain?.name}</div>
+    );
 
   return (
     <Grid container direction="row" spacing={2}>
@@ -235,7 +235,7 @@ const Multisig = () => {
           <TableContainer component={Paper}>
             <Table size="small" aria-label="owners">
               <TableBody>
-                {ownersArray.map((owner, index) => {
+                {ownersArray?.map((owner, index) => {
                   return (
                     <GetOwner
                       key={index}
@@ -287,15 +287,14 @@ const Multisig = () => {
             <TextField
               fullWidth
               helperText="Choose the TestContract address"
-              variant="standard"
               value={address}
-              onChange={(e) => setAddress(e.currentTarget.value)}
+              onChange={(e) => setAddress(e.target.value)}
               disabled={disabled}
               select
             >
-              {testContracts.map((option) => (
-                <MenuItem key={option.code} value={option.value}>
-                  {option.label}
+              {testContracts.map((fnCall) => (
+                <MenuItem key={fnCall.value} value={fnCall.value}>
+                  {fnCall.label}
                 </MenuItem>
               ))}
             </TextField>

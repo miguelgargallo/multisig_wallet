@@ -6,6 +6,7 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Button from "@mui/material/Button";
 import { shortenAddress } from "../utils/utils";
+import { useIsMounted } from "../hooks";
 
 const GetTransaction = ({
   index,
@@ -15,6 +16,7 @@ const GetTransaction = ({
   contractAddress,
   contractABI,
 }) => {
+  const isMounted = useIsMounted();
   const [disabled, setDisabled] = useState(false);
   const { data: transaction } = useContractRead(
     {
@@ -94,23 +96,19 @@ const GetTransaction = ({
   const data = transaction[2];
   const executed = transaction[3].toString();
   const numConfirmations = transaction[4].toString();
-  let param0;
-  let param1;
-  try {
-    param0 = iface.decodeFunctionData("callMe", data)[0].toString();
-    param1 = iface.decodeFunctionData("callMe", data)[1].toString();
-  } catch (error) {
-    param0 = "1";
-    param1 = "2";
-  }
+  const param0 = iface.decodeFunctionData("callMe", data)[0].toString();
+  const param1 = iface.decodeFunctionData("callMe", data)[1].toString();
+
   const handleConfirm = (e) => {
     e.preventDefault();
     writeConfirm({ args: [BigNumber.from(e.currentTarget.value)] });
   };
+
   const handleRevoke = (e) => {
     e.preventDefault();
     writeRevoke({ args: [BigNumber.from(e.currentTarget.value)] });
   };
+
   const handleExecute = (e) => {
     e.preventDefault();
     writeExecute({ args: [BigNumber.from(e.currentTarget.value)] });
@@ -128,7 +126,8 @@ const GetTransaction = ({
       <TableCell align="left">
         {executed !== "true" && (
           <>
-            {parseInt(numConfirmations) < numConfirmationsRequired && (
+            {parseInt(numConfirmations) <
+              parseInt(numConfirmationsRequired.toString()) && (
               <Button
                 variant="outlined"
                 size="small"

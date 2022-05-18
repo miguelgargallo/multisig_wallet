@@ -7,7 +7,7 @@ const SupportedNetworks = () => {
     <>
       Please connect the wallet to a supported network
       <ul>
-        {chains.map((x) => {
+        {chains?.map((x) => {
           return <li key={x.id}>{x.name}</li>;
         })}
       </ul>
