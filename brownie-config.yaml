@@ -17,12 +17,16 @@ networks:
   default: development
   kovan:
     verify: False
+    update_frontend: True
   rinkeby:
     verify: False
+    update_frontend: True
   hh-local:
     verify: False
+    update_frontend: True
   hh1-local:
     verify: False
+    update_frontend: True
 dotenv: .env
 wallets:
   from_key: ${PRIVATE_KEY}

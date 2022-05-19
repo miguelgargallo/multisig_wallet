@@ -1,6 +1,6 @@
-from brownie import convert, accounts,  MultiSigWallet, TestContract
+from brownie import convert, config, accounts, network,  MultiSigWallet, TestContract
 from web3 import Web3
-from scripts.helpful_scripts import get_account, update_front_end
+from scripts.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCHAIN_ENVIRONMENTS
 
 import eth_abi
 import random
@@ -10,20 +10,25 @@ DECIMALS = 10**18
 
 def main():
     multiSigWallet, testContract = deploy_contracts(
-        get_account(), update_frontend_flag=True)
+        get_account(), update_frontend_flag=config["networks"][network.show_active()]["update_frontend"])
     print_values(multiSigWallet, testContract)
     fund_contract(multiSigWallet, "5 gwei", get_account())
     print_values(multiSigWallet, testContract)
     randomValue = random.randint(0, 1000)
     tx = create_and_confirm_tx(
         multiSigWallet, testContract, randomValue, get_account())
-    execute_tx(tx, multiSigWallet, accounts[1])
+    execute_tx(tx, multiSigWallet, get_account())
     print_values(multiSigWallet, testContract)
 
 
 def params_msw():
-    owners = [accounts[0].address, accounts[1].address, accounts[2].address]
-    numConfirm = len(owners)-1
+    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        owners = [accounts[0].address,
+                  accounts[1].address, accounts[2].address]
+        numConfirm = len(owners)-1
+    else:
+        owners = [get_account()]
+        numConfirm = 1
     return owners, numConfirm
 
 
@@ -113,7 +118,7 @@ def execute_tx(tx_index, wallet, who_executes):
     print("-------------------------------")
     tx = wallet.executeTransaction(tx_index, {"from": who_executes})
     tx.wait(1)
-    print(f"Transaction #{tx_index} executed, the return is {tx.return_value}")
+    print(f"Transaction {tx_index} executed, the return is {tx.return_value}")
 
 
 def print_values(msw, testC):

@@ -5,11 +5,13 @@ import { BigNumber, utils } from "ethers";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Button from "@mui/material/Button";
-import { shortenAddress, addressNotZero } from "../utils/utils";
+import Stack from "@mui/material/Stack";
+import { addressNotZero } from "../utils/utils";
 import { useIsMounted } from "../hooks";
-import { ShowError } from "./";
+import { ShowError } from ".";
+import { GetStatusIcon } from "../components";
 
-const GetTransaction = ({
+const GetOneTransaction = ({
   txIdx,
   numConfirmationsRequired,
   iface,
@@ -91,65 +93,115 @@ const GetTransaction = ({
     }
   );
 
-  if (!tx) return null;
-  const trTo = tx[0];
-  const value = utils.formatUnits(tx[1]?.toString(), "gwei");
-  const data = tx[2];
-  const param0 = iface.decodeFunctionData("callMe", data)[0].toString();
-  const param1 = iface.decodeFunctionData("callMe", data)[1].toString();
-  const executed = tx[3].toString();
-  const txNumConfirmations = tx[4].toString();
-
   const handleConfirm = (e) => {
     e.preventDefault();
+    setDisabled(true);
     writeConfirm({ args: [BigNumber.from(e.currentTarget.value)] });
   };
 
   const handleRevoke = (e) => {
     e.preventDefault();
+    setDisabled(true);
     writeRevoke({ args: [BigNumber.from(e.currentTarget.value)] });
   };
 
   const handleExecute = (e) => {
     e.preventDefault();
+    setDisabled(true);
     writeExecute({ args: [BigNumber.from(e.currentTarget.value)] });
   };
-  if (isLoadingTx) return <div>Loading Transaction...</div>;
+
+  useEffect(() => {
+    if (statusTx !== "loading") {
+      if (disabled) setDisabled(false);
+    }
+    if (statusConfirm !== "loading") {
+      if (disabled) setDisabled(false);
+    }
+    if (statusRevoke !== "loading") {
+      if (disabled) setDisabled(false);
+    }
+    if (statusExecute !== "loading") {
+      if (disabled) setDisabled(false);
+    }
+    // eslint-disable-next-line
+  }, [statusTx, statusConfirm, statusRevoke, statusExecute]);
+
+  if (isLoadingTx)
+    return (
+      <TableRow key={txIdx}>
+        <TableCell align="right">
+          Loading Transaction...<GetStatusIcon status="loading"></GetStatusIcon>
+        </TableCell>
+      </TableRow>
+    );
+  //const trTo = tx[0];
+  const value = utils.formatUnits(tx[1]?.toString(), "gwei");
+  const data = tx[2];
+  let param0, param1, paramAbc;
+  try {
+    paramAbc = iface.decodeFunctionData("callMeString", data)[0];
+  } catch (err) {
+    try {
+      param0 = iface.decodeFunctionData("callMe", data)[0].toString();
+      param1 = iface.decodeFunctionData("callMe", data)[1].toString();
+    } catch (error) {
+      console.log("error=", error);
+    }
+  }
+  const executed = tx[3].toString();
+  const txNumConfirmations = tx[4].toString();
+
   return (
     <>
       {isMounted && (
-        <>
+        <TableRow key={txIdx}>
           {isSuccessTx ? (
-            <TableRow key={txIdx}>
+            <>
               <TableCell align="right">{txIdx}</TableCell>
-              <TableCell align="left">{shortenAddress(trTo)}</TableCell>
+              {/* <TableCell align="left">{shortenAddress(trTo)}</TableCell> */}
               <TableCell align="left">
-                TestContract.callMe({param0},{param1}), value: {value} gwei
+                {paramAbc ? (
+                  <>
+                    TestContract.callMeString("{paramAbc}"), value: {value} gwei
+                  </>
+                ) : (
+                  <>
+                    TestContract.callMe({param0},{param1}), value: {value} gwei
+                  </>
+                )}
               </TableCell>
               <TableCell align="left">{executed}</TableCell>
-              <TableCell align="right">{numConfirmations}</TableCell>
+              <TableCell align="right">{txNumConfirmations}</TableCell>
               <TableCell align="left">
                 {executed !== "true" && (
-                  <>
+                  <Stack
+                    direction="row"
+                    justifyContent="flex-start"
+                    alignItems="flex-start"
+                    spacing={0.5}
+                  >
                     {parseInt(txNumConfirmations) <
                       parseInt(numConfirmationsRequired.toString()) && (
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         size="small"
-                        disabled={disabled}
+                        disabled={disabled || isLoadingConfirm}
                         value={txIdx}
                         onClick={handleConfirm}
+                        endIcon={<GetStatusIcon status={statusConfirm} />}
                       >
                         Confirm?
                       </Button>
                     )}
                     {parseInt(txNumConfirmations) > 0 && (
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         size="small"
-                        disabled={disabled}
+                        disabled={disabled || isLoadingRevoke}
                         value={txIdx}
                         onClick={handleRevoke}
+                        endIcon={<GetStatusIcon status={statusRevoke} />}
                       >
                         Revoke?
                       </Button>
@@ -157,35 +209,48 @@ const GetTransaction = ({
                     {txNumConfirmations ===
                       numConfirmationsRequired.toString() && (
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         size="small"
-                        disabled={disabled}
+                        disabled={disabled || isLoadingExecute}
                         value={txIdx}
                         onClick={handleExecute}
+                        endIcon={<GetStatusIcon status={statusExecute} />}
                       >
                         Execute?
                       </Button>
                     )}
-                  </>
+                  </Stack>
                 )}
               </TableCell>
-            </TableRow>
+              <TableCell align="right">
+                {isErrorConfirm && (
+                  <ShowError flag={isErrorConfirm} error={errorConfirm} />
+                )}
+                {isErrorRevoke && (
+                  <ShowError flag={isErrorRevoke} error={errorRevoke} />
+                )}
+                {isErrorExecute && (
+                  <ShowError flag={isErrorExecute} error={errorExecute} />
+                )}
+              </TableCell>
+            </>
           ) : (
-            <TableRow key={txIdx}>
+            <>
               <TableCell align="right"></TableCell>
-              <TableCell align="left"></TableCell>
+              {/* <TableCell align="left"></TableCell> */}
               <TableCell align="left">
                 <ShowError flag={isErrorTx} error={errorTx} />
               </TableCell>
               <TableCell align="left"></TableCell>
               <TableCell align="right"></TableCell>
               <TableCell align="left"></TableCell>
-            </TableRow>
+              <TableCell align="left"></TableCell>
+            </>
           )}
-        </>
+        </TableRow>
       )}
     </>
   );
 };
 
-export default GetTransaction;
+export default GetOneTransaction;

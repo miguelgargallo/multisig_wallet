@@ -15,7 +15,7 @@ const useGetConfReq = (activeChain, contractAddress, contractABI) => {
     },
     "numConfirmationsRequired",
     {
-      watch: true,
+      watch: Boolean(activeChain && addressNotZero(contractAddress)),
       enabled: Boolean(activeChain && addressNotZero(contractAddress)),
     }
   );

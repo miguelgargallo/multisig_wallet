@@ -1,25 +1,21 @@
 import { useContractRead } from "wagmi";
-import { BigNumber, constants } from "ethers";
+import { BigNumber } from "ethers";
 import { addressNotZero } from "../utils/utils";
 
-const useGetTransactionsCount = (
-  _activeChain,
-  _contractAddress,
-  _contractABI
-) => {
+const useGetTransactionsCount = (activeChain, contractAddress, contractABI) => {
   const {
     data: transactionsCount,
     isError: isErrortransactionsCount,
     isLoading: isLoadingtransactionsCount,
   } = useContractRead(
     {
-      addressOrName: _contractAddress,
-      contractInterface: _contractABI,
+      addressOrName: contractAddress,
+      contractInterface: contractABI,
     },
     "getTransactionCount",
     {
-      watch: true,
-      enabled: Boolean(_activeChain && addressNotZero(_contractAddress)),
+      watch: Boolean(activeChain && addressNotZero(contractAddress)),
+      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
     }
   );
 

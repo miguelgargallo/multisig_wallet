@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
-import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 
 import { useNetwork, useAccount } from "wagmi";
-
 import { addressNotZero } from "../utils/utils";
 
 import {
@@ -43,7 +40,7 @@ const Multisig = () => {
   return (
     <>
       {isMounted && (
-        <Grid container direction="row" spacing={2}>
+        <Grid container direction="row" padding={1} spacing={1}>
           <Grid item>
             <Paper elevation={4}>
               <GetMultisigContract

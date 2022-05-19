@@ -1,8 +1,10 @@
 import { useNetwork } from "wagmi";
 import { constants, utils } from "ethers";
 
-import contractMultisigWallet from "../chain-info/MultiSigWallet.json";
 import networkMapping from "../chain-info/map.json";
+
+import contractMultisigWallet from "../chain-info/MultiSigWallet.json";
+import contractTestContract from "../chain-info/TestContract.json";
 
 const GetContract = (contractName) => {
   const { activeChain } = useNetwork();
@@ -16,13 +18,24 @@ const GetContract = (contractName) => {
       : constants.AddressZero;
   }
 
-  const { abi } = contractMultisigWallet;
-
-  if (!activeChain)
-    return { contractAddress: constants.AddressZero, contractABI: abi };
+  const { abi: abiMultisignWallet } = contractMultisigWallet;
+  const { abi: abiTestContract } = contractTestContract;
 
   const formattedAddress = utils.getAddress(contractAddress);
-  return { contractAddress: formattedAddress, contractABI: abi };
+
+  if (contractName === "MultiSigWallet") {
+    return {
+      contractAddress: activeChain ? formattedAddress : constants.AddressZero,
+      contractABI: abiMultisignWallet,
+    };
+  }
+  if (contractName === "TestContract") {
+    return {
+      contractAddress: activeChain ? formattedAddress : constants.AddressZero,
+      contractABI: abiTestContract,
+    };
+  }
+  return { contractAddress: formattedAddress, contractABI: abiMultisignWallet };
 };
 
 export default GetContract;

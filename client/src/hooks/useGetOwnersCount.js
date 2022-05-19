@@ -15,7 +15,7 @@ const useGetOwnersCount = (activeChain, contractAddress, contractABI) => {
     },
     "getOwnersCount",
     {
-      watch: true,
+      watch: Boolean(activeChain && addressNotZero(contractAddress)),
       enabled: Boolean(activeChain && addressNotZero(contractAddress)),
     }
   );

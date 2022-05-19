@@ -5,9 +5,10 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
 import Paper from "@mui/material/Paper";
+import TableHead from "@mui/material/TableHead";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
 
 import { useIsMounted, useGetOwnersCount } from "../hooks";
 import { addressNotZero } from "../utils/utils";
@@ -43,7 +44,7 @@ const GetOwner = ({
       {isMounted && !isLoadingOwner && (
         <>
           {isErrorOwner ? (
-            <TableRow key={idxOwner} selected={false}>
+            <TableRow key={idxOwner} selected={true}>
               <TableCell align="left">
                 <ShowError flag={isErrorOwner} error={errorOwner} />
               </TableCell>
@@ -73,12 +74,22 @@ const GetOwners = ({ activeChain, contractAddress, contractABI, account }) => {
   ];
 
   return (
-    <>
+    <Stack
+      direction="column"
+      justifyContent="flex-start"
+      alignItems="flex-start"
+      spacing={1}
+      padding={1}
+    >
       {isMounted && (
         <>
-          <Typography>Owners</Typography>
           <TableContainer component={Paper}>
             <Table size="small" aria-label="owners">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="left">Owners</TableCell>
+                </TableRow>
+              </TableHead>
               <TableBody>
                 {ownersArray?.map((_, index) => {
                   return (
@@ -97,7 +108,7 @@ const GetOwners = ({ activeChain, contractAddress, contractABI, account }) => {
           </TableContainer>
         </>
       )}
-    </>
+    </Stack>
   );
 };
 

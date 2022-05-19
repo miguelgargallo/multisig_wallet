@@ -3,12 +3,15 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import MenuItem from "@mui/material/MenuItem";
-import { useIsMounted } from "../hooks";
-import { BigNumber, constants, utils } from "ethers";
-import { useContractWrite } from "wagmi";
+import Stack from "@mui/material/Stack";
 
-import { GetContractTestContract } from "../components";
+import { BigNumber, utils } from "ethers";
+import { useContractWrite } from "wagmi";
+import { useIsMounted } from "../hooks";
+
+import { GetContract, GetStatusIcon } from "../components";
 import { addressNotZero } from "../utils/utils";
+import { ShowError } from ".";
 
 const SubmitTransaction = ({
   activeChain,
@@ -17,19 +20,26 @@ const SubmitTransaction = ({
   account,
 }) => {
   const isMounted = useIsMounted();
+
   const { contractAddress: contractAddressTest, contractABI: contractABITest } =
-    GetContractTestContract("TestContract");
+    GetContract("TestContract");
   const ifaceContractTest = new utils.Interface(contractABITest);
 
   const [disabled, setDisabled] = useState(false);
-  const [address, setAddress] = useState("");
+  const [callData, setCallData] = useState("1");
   const [param1, setParam1] = useState("0");
   const [param2, setParam2] = useState("0");
-  const [value1, setValue1] = useState("0");
-  const testContracts = [
+  const [paramAbc, setParamAbc] = useState("");
+  const [value, setValue] = useState("0");
+
+  const callDataValues = [
     {
-      value: contractAddressTest,
+      value: "1",
       label: "TestContract.callMe(uint256 j, uint256 a)",
+    },
+    {
+      value: "2",
+      label: "TestContract.callMeString(string _abc)",
     },
   ];
 
@@ -56,33 +66,39 @@ const SubmitTransaction = ({
     try {
       const localvalue = utils.parseEther(e.currentTarget.value);
       if (localvalue >= 0) {
-        setValue1(e.currentTarget.value);
+        setValue(e.currentTarget.value);
       }
-    } catch (error) {
-      setValue1("");
-    }
+    } catch (error) {}
   };
   const handleClick = () => {
-    if (
-      address &&
-      address !== "" &&
-      value1 &&
-      value1 !== "0" &&
-      parseFloat(value1) > 0
-    ) {
+    if (callData && callData !== "") {
       setDisabled(true);
-      const data = ifaceContractTest.encodeFunctionData("callMe", [
-        BigNumber.from(param1),
-        BigNumber.from(param2),
-      ]);
+      let defaultValue = 0;
+      if (value || parseFloat(value) >= 0) defaultValue = value;
+
+      let data;
+      if (callData === "1") {
+        data = ifaceContractTest.encodeFunctionData("callMe", [
+          BigNumber.from(param1),
+          BigNumber.from(param2),
+        ]);
+      } else if (callData === "2") {
+        data = ifaceContractTest.encodeFunctionData("callMeString", [paramAbc]);
+      }
+
       writeSubmit({
-        args: [address, BigNumber.from(utils.parseUnits(value1, "gwei")), data],
+        args: [
+          contractAddressTest,
+          BigNumber.from(utils.parseUnits(defaultValue, "gwei")),
+          data,
+        ],
       });
       setDisabled(false);
-      setValue1("");
-      setParam1("");
-      setParam2("");
-      setAddress(contractAddressTest);
+      setValue("0");
+      setParam1("0");
+      setParam2("0");
+      setParamAbc("");
+      //setCallData("1");
     }
   };
 
@@ -107,78 +123,121 @@ const SubmitTransaction = ({
     }
   };
 
+  useEffect(() => {
+    if (statusSubmit !== "loading") {
+      if (disabled) setDisabled(false);
+    }
+    // eslint-disable-next-line
+  }, [statusSubmit]);
+
   return (
-    <>
+    <Stack
+      direction="column"
+      justifyContent="flex-start"
+      alignItems="flex-start"
+      spacing={1}
+      padding={1}
+    >
       {isMounted && (
         <>
-          <Typography>Submit a transaction</Typography>
-          <div>
+          <Stack
+            direction="column"
+            justifyContent="flex-start"
+            alignItems="flex-start"
+            spacing={1}
+            padding={1}
+          >
+            <Typography>Submit a transaction</Typography>
+
             <TextField
-              fullWidth
-              helperText="Choose the TestContract address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              value={callData}
+              onChange={(e) => setCallData(e.target.value)}
               disabled={disabled}
               select
             >
-              {testContracts.map((fnCall) => (
+              {callDataValues.map((fnCall) => (
                 <MenuItem key={fnCall.value} value={fnCall.value}>
                   {fnCall.label}
                 </MenuItem>
               ))}
             </TextField>
-          </div>
-          <div>
             <TextField
               inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
               variant="standard"
               type="text"
-              required
               margin="normal"
               label="Value (in gwei)"
-              value={value1}
+              value={value}
               onChange={handleValue}
               disabled={disabled}
             />
-          </div>
-          <div>
-            <TextField
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-              variant="standard"
-              type="text"
-              required
-              margin="normal"
-              label="Parameter 1"
-              value={param1}
-              onChange={handleParam1}
-              disabled={disabled}
-            />
-          </div>
-          <div>
-            <TextField
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-              variant="standard"
-              type="text"
-              required
-              margin="normal"
-              label="Parameter 2"
-              value={param2}
-              onChange={handleParam2}
-              disabled={disabled}
-            />
-          </div>
-          <div>
+            {callData === "1" ? (
+              <>
+                <TextField
+                  inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                  variant="standard"
+                  type="text"
+                  required
+                  margin="normal"
+                  label="Parameter 1"
+                  value={param1}
+                  onChange={handleParam1}
+                  disabled={disabled}
+                />
+                <TextField
+                  inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                  variant="standard"
+                  type="text"
+                  required
+                  margin="normal"
+                  label="Parameter 2"
+                  value={param2}
+                  onChange={handleParam2}
+                  disabled={disabled}
+                />
+              </>
+            ) : (
+              <>
+                <TextField
+                  fullWidth
+                  value={paramAbc}
+                  required
+                  variant="standard"
+                  margin="normal"
+                  label="Parameter _abc (string)"
+                  onChange={(e) => setParamAbc(e.target.value)}
+                  disabled={disabled}
+                />
+              </>
+            )}
+          </Stack>
+          <Stack
+            direction="column"
+            justifyContent="center"
+            alignItems="center"
+            spacing={1}
+            padding={1}
+          >
             <Button
               variant="contained"
               onClick={handleClick}
-              disabled={disabled}
+              disabled={
+                disabled ||
+                isLoadingSubmit ||
+                (callData === "2" && !paramAbc) ||
+                (callData === "1" && (!param1 || !param2))
+              }
+              endIcon={<GetStatusIcon status={statusSubmit} />}
             >
-              Submit Transaction
+              Submit
             </Button>
-          </div>
+            {isErrorSubmit && (
+              <ShowError flag={isErrorSubmit} error={errorSubmit} />
+            )}
+          </Stack>
         </>
       )}
-    </>
+    </Stack>
   );
 };
 

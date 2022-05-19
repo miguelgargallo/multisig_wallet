@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
 
 import { utils } from "ethers";
-import { shortenAddress, addressNotZero } from "../utils/utils";
+import { addressNotZero } from "../utils/utils";
 
 import { useBalance, useContractRead, useSendTransaction } from "wagmi";
-import { ShowError } from "./";
 import { useIsMounted } from "../hooks";
+import { GetStatusIcon, ShowError } from "../components";
+import { Paper } from "@mui/material";
 
 const GetMutisigContract = ({
   activeChain,
@@ -20,7 +22,7 @@ const GetMutisigContract = ({
 
   const {
     data: balance,
-    isLoadingBalance,
+    //isLoadingBalance,
     isError: isErrorBalance,
     isSuccess: isSuccessBalance,
     error: errorBalance,
@@ -33,7 +35,7 @@ const GetMutisigContract = ({
 
   const {
     data: requiredConfirmations,
-    isLoading: isLoadingRequiredConfirmations,
+    //isLoading: isLoadingRequiredConfirmations,
     isError: isErrorRequiredConfirmations,
     isSuccess: isSuccessRequiredConfirmations,
     error: errorRequiredConfirmations,
@@ -78,42 +80,55 @@ const GetMutisigContract = ({
     if (statusFundContract !== "loading") {
       if (disabled) setDisabled(false);
     }
+    // eslint-disable-next-line
   }, [statusBalance, statusRequiredConfirmations, statusFundContract]);
 
   return (
-    <>
-      {isMounted && !isLoadingBalance && !isLoadingRequiredConfirmations && (
-        <>
-          <Typography>
-            Contract Address: {shortenAddress(contractAddress)}
-          </Typography>
-          {isSuccessBalance && (
+    <Stack
+      direction="column"
+      justifyContent="flex-start"
+      alignItems="flex-start"
+      spacing={1}
+      padding={1}
+    >
+      {isMounted && (
+        <Paper>
+          <Typography>Contract Address: {contractAddress}</Typography>
+          {isSuccessRequiredConfirmations && (
             <Typography>
-              Balance: {balance?.formatted} ETH{" "}
+              Required Confirmations: from {requiredConfirmations?.toString()}{" "}
+              owner(s)
+            </Typography>
+          )}
+          {isSuccessBalance && (
+            <>
+              <Typography>Balance: {balance?.formatted} ETH </Typography>
               <Button
-                variant="outlined"
+                variant="contained"
                 size="small"
                 onClick={handleFundContract}
                 disabled={disabled || isLoadingFundContract}
+                endIcon={<GetStatusIcon status={statusFundContract} />}
               >
                 Fund Contract (with 5 gwei)
               </Button>
-            </Typography>
+            </>
           )}
-          {isSuccessRequiredConfirmations && (
-            <Typography>
-              RequiredConfirmations: {requiredConfirmations?.toString()}
-            </Typography>
+          {isErrorBalance && (
+            <ShowError flag={isErrorBalance} error={errorBalance} />
           )}
-          <ShowError flag={isErrorBalance} error={errorBalance} />
-          <ShowError
-            flag={isErrorRequiredConfirmations}
-            error={errorRequiredConfirmations}
-          />
-          <ShowError flag={isErrorFundContract} error={errorFundContract} />
-        </>
+          {isErrorRequiredConfirmations && (
+            <ShowError
+              flag={isErrorRequiredConfirmations}
+              error={errorRequiredConfirmations}
+            />
+          )}
+          {isErrorFundContract && (
+            <ShowError flag={isErrorFundContract} error={errorFundContract} />
+          )}
+        </Paper>
       )}
-    </>
+    </Stack>
   );
 };
 

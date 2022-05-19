@@ -2,9 +2,8 @@ import Alert from "./Alert";
 import MenuAppBar from "./MenuAppBar";
 import SupportedNetworks from "./SupportedNetworks";
 import GetContract from "./GetContract";
-import GetContractTestContract from "./GetContractTestContract";
 import GetStatusIcon from "./GetStatusIcon";
-import GetTransaction from "./GetTransaction";
+import GetOneTransaction from "./GetOneTransaction";
 import GetTransactions from "./GetTransactions";
 import GetOwners from "./GetOwners";
 import GetMultisigContract from "./GetMutisigContract";
@@ -16,8 +15,7 @@ export {
   MenuAppBar,
   GetStatusIcon,
   GetContract,
-  GetContractTestContract,
-  GetTransaction,
+  GetOneTransaction,
   GetTransactions,
   GetOwners,
   GetMultisigContract,

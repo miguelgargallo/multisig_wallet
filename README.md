@@ -1,71 +1,103 @@
-Study case of MultiSigWallet contract, from Solidity by example site [Solidity by Example, Multi-Sig Wallet](https://solidity-by-example.org/app/multi-sig-wallet/)
+# Fullstack Ethereum React Application for the Multisignature contract
 
-I used brownie with hardhat in order to deploy and use the console.log features.
-You should start the hardhat node in another terminal and folder (`hh node`), then, in a terminal :
+The contract is the MultiSigWallet contract, from Solidity by example site [Solidity by Example, Multi-Sig Wallet](https://solidity-by-example.org/app/multi-sig-wallet/)
+It allow users to submit,confirm and execute transactions agains a TestContract
+
+## Live client application
+
+The client application is deployed on Netlify/Rinkeby.
+
+https://to-be-deployed.netlify.app/
+
+![Multi-Sig Wallet webapp ](multisigwallet_frontend.png)
+
+## Quickstart
+
+### `npm install`
+
+```bash
+npm install
+```
+
+To install the required packages.
+
+### `configure .env`
+
+Configure .env file in the mutisig_wallet folder
+An example of .env file :
+
+```bash .env
+PRIVATE_KEY=0xabcdef
+RINKEBY_RPC_URL ="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
+UPDATE_FRONT_END=yes
+```
+
+### `compile the smartcontracts`
 
 ```
 brownie compile
-brownie run scripts/deploy.py
 ```
 
-The code is filled with console.log calls in order to see the different calls and the execution of functions.
+### `start hardhat`
 
-The MultiSigWallet is allowing to encode a transaction against another contract, to confirm it using multiple signatures from his owners and to submit and execute this transaction on the other contract using low-level call.
+Please make sure to start hardhat from the mutisig_wallet folder in one terminal
 
-In the deploy.py script, a transaction with a call to the TestContract.callMe is encoded and executed.
-
-For obtaining the signature of the solidity function call, we can use Web3.keccak function to manually encode the function signature and the parameters.
-Another (better) method is to use the Contract.method.encode_input call in order to obtain the calldata to be submitted.
-
-```solidity
-(bool success, bytes memory returnData) = address(contract).call(payload);
-require(success);
+```bash
+npx hardhat node
 ```
 
-Here is the relevant Python code (using brownie):
+### `add hh-local`
 
-```python
-    transaction_value = Web3.toWei(1, "gwei")
-    param1 = random_value
-    param2 = random.randint(0, 2000)
+Then go to another terminal and add hh-local as a permanent network in brownie
 
-    # This is how we can manually encode the function call and the parameters
-    # func_signature = Web3.keccak(text="callMe(uint256,uint256)")[:4].hex()
-    # params_encoded = eth_abi.encode_abi(
-    #     ["uint256", "uint256"], [var1, var2]).hex()
-    # calldata_encoded = func_signature+params_encoded
-    # print(calldata_encoded)
-    # solidity_encoded = againstContract.getData(var1, var2)
-    # print(solidity_encoded)
-    # assert solidity_encoded == calldata_encoded
-
-    # This is how we encode using contract.method.encode_input
-    #solidity_encoded = againstContract.getData(var1, var2)
-    calldata_encoded = againstContract.callMe.encode_input(param1, param2)
-    #print(f"calldata ={calldata_encoded}")
-    #assert solidity_encoded == calldata_encoded
-
-    # in the case we want to test the encoding of string parameter
-    # encoding done manually
-    # func_signature = Web3.keccak(text="callMeString(string)")[:4].hex()
-    # paramString1 = "test"
-    # params_encoded = eth_abi.encode_abi(["string"], [paramString1]).hex()
-    # calldata_encoded = func_signature+params_encoded
-    # print(calldata_encoded)
-
-    # print(solidity_encoded)
-    # solidity_encoded = againstContract.getDataString(paramString1)
-    # or encoding done with contract.method.encode_input
-    # calldata_encoded = againstContract.callMeString.encode_input(paramString1)
-    # assert solidity_encoded == calldata_encoded
-
-    tx = multiSigWallet.submitTransaction(
-        againstContract.address, transaction_value, calldata_encoded, {"from": who_create})
-    tx.wait(1)
+```bash
+brownie networks add Ethereum hh-local host=http://127.0.0.1 chainid=31337
 ```
+
+### `deploy on hh-local and rinkeby`
+
+In the same multisig_wallet folder, deploy the contracts :
+
+```bash
+brownie run scripts/deploy.py --network hh-local
+brownie run scripts/deploy.py --network rinkeby
+```
+
+### `configure and start the client app`
+
+Go to the client folder, install dependencies, configure .env file and start the app
+
+### `npm install`
+
+To install the required packages.
+
+```bash
+npm install
+```
+
+### `configure .env`
+
+Configure .env file in the client folder.
+An example of .env file :
+
+```bash .env
+GENERATE_SOURCEMAP=false
+ALCHEMY_ID="your-api-key"
+REACT_APP_RINKEBY_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
+REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/greetergraph/0.0.4"
+```
+
+### `start the application`
+
+```bash
+npm start
+```
+
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+
+You can switch the networks between hardhat and rinkeby.
 
 Deployment from brownie, screenshot of console at the end:
-![Multi-Sig Wallet deployment ](multisig_wallet_deploy.png)
 
-From the hardhat console, the console.log output:
-![Hardhat console](multisig_wallet_console.png)
+![Multi-Sig Wallet deployment ](multisig_wallet_deploy.png)
