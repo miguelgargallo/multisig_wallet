@@ -1,5 +1,5 @@
 import { useNetwork } from "wagmi";
-import { constants } from "ethers";
+import { constants, utils } from "ethers";
 
 import contractTestContract from "../chain-info/TestContract.json";
 import networkMapping from "../chain-info/map.json";
@@ -20,8 +20,8 @@ const GetContractTestContract = (contractName) => {
 
   if (!activeChain)
     return { contractAddress: constants.AddressZero, contractABI: abi };
-
-  return { contractAddress: contractAddress, contractABI: abi };
+  const formattedAddress = utils.getAddress(contractAddress);
+  return { contractAddress: formattedAddress, contractABI: abi };
 };
 
 export default GetContractTestContract;

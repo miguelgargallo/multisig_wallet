@@ -2,28 +2,28 @@ import { useContractRead } from "wagmi";
 import { BigNumber } from "ethers";
 import { addressNotZero } from "../utils/utils";
 
-const useGetOwnersCount = (activeChain, contractAddress, contractABI) => {
+const useGetConfReq = (activeChain, contractAddress, contractABI) => {
   const {
-    data: txCount,
-    isLoading: isLoadingTxCount,
-    isError: isErrorTxCount,
-    isSuccess: isSuccessTxCount,
+    data: confReq,
+    isLoading: isLoadingConfReq,
+    isError: isErrorConfReq,
+    isSuccess: isSuccessConfReq,
   } = useContractRead(
     {
       addressOrName: contractAddress,
       contractInterface: contractABI,
     },
-    "getOwnersCount",
+    "numConfirmationsRequired",
     {
       watch: true,
       enabled: Boolean(activeChain && addressNotZero(contractAddress)),
     }
   );
 
-  if (isLoadingTxCount || isErrorTxCount || !isSuccessTxCount)
+  if (isLoadingConfReq || isErrorConfReq || !isSuccessConfReq)
     return BigNumber.from("0");
 
-  return txCount;
+  return confReq;
 };
 
-export default useGetOwnersCount;
+export default useGetConfReq;

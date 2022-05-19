@@ -6,8 +6,7 @@ function shortenString(str) {
 
 export function shortenAddress(address) {
   try {
-    const formattedAddress = utils.getAddress(address);
-    return shortenString(formattedAddress);
+    return shortenString(utils.getAddress(address));
   } catch {
     throw new TypeError("Invalid input, address can't be parsed");
   }
@@ -22,3 +21,7 @@ export const formatBalance = (balance) =>
   formatter.format(
     parseFloat(utils.formatEther(balance ?? BigNumber.from("0")))
   );
+
+export const addressNotZero = (address) => {
+  return utils.getAddress(address) !== constants.AddressZero;
+};

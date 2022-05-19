@@ -5,7 +5,11 @@ import GetContract from "./GetContract";
 import GetContractTestContract from "./GetContractTestContract";
 import GetStatusIcon from "./GetStatusIcon";
 import GetTransaction from "./GetTransaction";
-import GetOwner from "./GetOwner";
+import GetTransactions from "./GetTransactions";
+import GetOwners from "./GetOwners";
+import GetMultisigContract from "./GetMutisigContract";
+import SubmitTransaction from "./SubmitTransaction";
+import ShowError from "./ShowError";
 
 export {
   Alert,
@@ -14,6 +18,10 @@ export {
   GetContract,
   GetContractTestContract,
   GetTransaction,
-  GetOwner,
+  GetTransactions,
+  GetOwners,
+  GetMultisigContract,
+  SubmitTransaction,
   SupportedNetworks,
+  ShowError,
 };
