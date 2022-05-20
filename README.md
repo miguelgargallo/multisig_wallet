@@ -7,7 +7,7 @@ It allow users to submit,confirm and execute transactions agains a TestContract
 
 The client application is deployed on Netlify/Rinkeby.
 
-https://to-be-deployed.netlify.app/
+https://multisigwalletfullstack.netlify.app/
 
 ![Multi-Sig Wallet webapp ](multisigwallet_frontend.png)
 
@@ -84,7 +84,7 @@ An example of .env file :
 GENERATE_SOURCEMAP=false
 ALCHEMY_ID="your-api-key"
 REACT_APP_RINKEBY_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
-REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/greetergraph/0.0.4"
+REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.1"
 ```
 
 ### `start the application`

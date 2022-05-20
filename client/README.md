@@ -6,7 +6,7 @@ It allow users to submit,confirm and execute transactions agains a TestContract
 
 The client application is deployed on Netlify/Rinkeby.
 
-https://to-be-deployed.netlify.app/
+https://multisigwalletfullstack.netlify.app/
 
 ![Multi-Sig Wallet webapp ](../multisigwallet_frontend.png)
 
@@ -25,7 +25,7 @@ An example of .env file :
 GENERATE_SOURCEMAP=false
 ALCHEMY_ID="your-api-key"
 REACT_APP_RINKEBY_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
-REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/greetergraph/0.0.4"
+REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.1"
 ```
 
 ### `start the application`
@@ -39,7 +39,7 @@ Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 You can switch the networks between hardhat and rinkeby.
 
-## Subgraph Greeter deployed on The Graph studio
+## Subgraph multisign_wallet deployed on The Graph studio
 
-In the client/src folder there is a `greetergraph` folder containing the deployement
-of the Greeter contract on the Rinkeby network.
+In the client/src folder there is a `graphmultisignwallet` folder containing the deployement
+of the MultisignWallet contract on the Rinkeby network.

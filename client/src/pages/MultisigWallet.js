@@ -10,6 +10,7 @@ import {
   GetTransactions,
   GetOwners,
   GetMultisigContract,
+  GraphMultisignWallet,
   SubmitTransaction,
 } from "../components";
 import { useIsMounted } from "../hooks";
@@ -70,6 +71,11 @@ const Multisig = () => {
                 contractABI={contractABI}
                 account={account}
               />
+            </Paper>
+          </Grid>
+          <Grid item>
+            <Paper elevation={4}>
+              <GraphMultisignWallet />
             </Paper>
           </Grid>
         </Grid>

@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import { Paper } from "@mui/material";
 
 import { utils } from "ethers";
 import { addressNotZero } from "../utils/utils";
 
-import { useBalance, useContractRead, useSendTransaction } from "wagmi";
-import { useIsMounted } from "../hooks";
+import { useBalance, useSendTransaction } from "wagmi";
+import { useIsMounted, useGetConfReq } from "../hooks";
 import { GetStatusIcon, ShowError } from "../components";
-import { Paper } from "@mui/material";
 
 const GetMutisigContract = ({
   activeChain,
@@ -33,24 +33,10 @@ const GetMutisigContract = ({
     enabled: Boolean(activeChain && account && addressNotZero(contractAddress)),
   });
 
-  const {
-    data: requiredConfirmations,
-    //isLoading: isLoadingRequiredConfirmations,
-    isError: isErrorRequiredConfirmations,
-    isSuccess: isSuccessRequiredConfirmations,
-    error: errorRequiredConfirmations,
-    status: statusRequiredConfirmations,
-  } = useContractRead(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
-    "numConfirmationsRequired",
-    {
-      enabled: Boolean(
-        activeChain && account && addressNotZero(contractAddress)
-      ),
-    }
+  const requiredConfirmations = useGetConfReq(
+    activeChain,
+    contractAddress,
+    contractABI
   );
 
   const {
@@ -74,14 +60,11 @@ const GetMutisigContract = ({
     if (statusBalance !== "loading") {
       if (disabled) setDisabled(false);
     }
-    if (statusRequiredConfirmations !== "loading") {
-      if (disabled) setDisabled(false);
-    }
     if (statusFundContract !== "loading") {
       if (disabled) setDisabled(false);
     }
     // eslint-disable-next-line
-  }, [statusBalance, statusRequiredConfirmations, statusFundContract]);
+  }, [statusBalance, statusFundContract]);
 
   return (
     <Stack
@@ -94,12 +77,10 @@ const GetMutisigContract = ({
       {isMounted && (
         <Paper>
           <Typography>Contract Address: {contractAddress}</Typography>
-          {isSuccessRequiredConfirmations && (
-            <Typography>
-              Required Confirmations: from {requiredConfirmations?.toString()}{" "}
-              owner(s)
-            </Typography>
-          )}
+          <Typography>
+            Required Confirmations: from {requiredConfirmations?.toString()}{" "}
+            owner(s)
+          </Typography>
           {isSuccessBalance && (
             <>
               <Typography>Balance: {balance?.formatted} ETH </Typography>
@@ -116,12 +97,6 @@ const GetMutisigContract = ({
           )}
           {isErrorBalance && (
             <ShowError flag={isErrorBalance} error={errorBalance} />
-          )}
-          {isErrorRequiredConfirmations && (
-            <ShowError
-              flag={isErrorRequiredConfirmations}
-              error={errorRequiredConfirmations}
-            />
           )}
           {isErrorFundContract && (
             <ShowError flag={isErrorFundContract} error={errorFundContract} />

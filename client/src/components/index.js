@@ -9,6 +9,7 @@ import GetOwners from "./GetOwners";
 import GetMultisigContract from "./GetMutisigContract";
 import SubmitTransaction from "./SubmitTransaction";
 import ShowError from "./ShowError";
+import GraphMultisignWallet from "./GraphMultisignWallet";
 
 export {
   Alert,
@@ -19,6 +20,7 @@ export {
   GetTransactions,
   GetOwners,
   GetMultisigContract,
+  GraphMultisignWallet,
   SubmitTransaction,
   SupportedNetworks,
   ShowError,
