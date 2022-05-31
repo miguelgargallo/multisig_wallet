@@ -35,26 +35,24 @@ const GetOwner = ({
     "owners",
     {
       args: [BigNumber.from(idxOwner)],
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      enabled: Boolean(
+        isMounted && activeChain && addressNotZero(contractAddress)
+      ),
     }
   );
-
+  if (!isMounted || isLoadingOwner) return <></>;
   return (
     <>
-      {isMounted && !isLoadingOwner && (
-        <>
-          {isErrorOwner ? (
-            <TableRow key={idxOwner} selected={true}>
-              <TableCell align="left">
-                <ShowError flag={isErrorOwner} error={errorOwner} />
-              </TableCell>
-            </TableRow>
-          ) : (
-            <TableRow key={idxOwner} selected={owner === account?.address}>
-              <TableCell align="left">{owner}</TableCell>
-            </TableRow>
-          )}
-        </>
+      {isErrorOwner ? (
+        <TableRow key={idxOwner} selected={true}>
+          <TableCell align="left">
+            <ShowError flag={isErrorOwner} error={errorOwner} />
+          </TableCell>
+        </TableRow>
+      ) : (
+        <TableRow key={idxOwner} selected={owner === account?.address}>
+          <TableCell align="left">{owner}</TableCell>
+        </TableRow>
       )}
     </>
   );
@@ -73,42 +71,41 @@ const GetOwners = ({ activeChain, contractAddress, contractABI, account }) => {
     ...Array.from({ length: parseInt(ownersCount) }, (_, idx) => `${++idx}`),
   ];
 
+  if (!isMounted) return <></>;
   return (
-    <Stack
-      direction="column"
-      justifyContent="flex-start"
-      alignItems="flex-start"
-      spacing={1}
-      padding={1}
-    >
-      {isMounted && (
-        <>
-          <TableContainer component={Paper}>
-            <Table size="small" aria-label="owners">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="left">Owners</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {ownersArray?.map((_, index) => {
-                  return (
-                    <GetOwner
-                      key={index}
-                      idxOwner={index}
-                      account={account}
-                      contractAddress={contractAddress}
-                      contractABI={contractABI}
-                      activeChain={activeChain}
-                    />
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </>
-      )}
-    </Stack>
+    <Paper elevation={4}>
+      <Stack
+        direction="column"
+        justifyContent="flex-start"
+        alignItems="flex-start"
+        spacing={1}
+        padding={1}
+      >
+        <TableContainer>
+          <Table size="small" aria-label="owners">
+            <TableHead>
+              <TableRow>
+                <TableCell align="left">Owners</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {ownersArray?.map((_, index) => {
+                return (
+                  <GetOwner
+                    key={index}
+                    idxOwner={index}
+                    account={account}
+                    contractAddress={contractAddress}
+                    contractABI={contractABI}
+                    activeChain={activeChain}
+                  />
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Stack>
+    </Paper>
   );
 };
 

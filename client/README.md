@@ -19,13 +19,26 @@ To install the required packages.
 ### `configure .env`
 
 Configure .env file in the client folder
-An example of .env file :
 
-```bash .env
+```
 GENERATE_SOURCEMAP=false
 ALCHEMY_ID="your-api-key"
 REACT_APP_RINKEBY_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
 REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.1"
+```
+
+### `deploy on hardhat`
+
+In the client folder, in src/index.js, uncomment chain.hardhat, in order to deploy on hardhat too:
+
+```
+const { provider, chains } = configureChains(
+  [
+    //chain.hardhat,
+    chain.rinkeby,
+  ],
+  [alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }), publicProvider()]
+);
 ```
 
 ### `start the application`

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -6,11 +7,11 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 
 import { BigNumber, utils } from "ethers";
-import { useContractWrite } from "wagmi";
-import { useIsMounted } from "../hooks";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
+import { useIsMounted, useGetContract } from "../hooks";
 
-import { GetContract, GetStatusIcon } from "../components";
-import { addressNotZero } from "../utils/utils";
+import { GetStatusIcon } from "../components";
+import { addressNotZero, getNumConfirmations } from "../utils/utils";
 import { ShowError } from ".";
 
 const SubmitTransaction = ({
@@ -20,9 +21,12 @@ const SubmitTransaction = ({
   account,
 }) => {
   const isMounted = useIsMounted();
-
-  const { contractAddress: contractAddressTest, contractABI: contractABITest } =
-    GetContract("TestContract");
+  const isEnabled = Boolean(
+    isMounted && activeChain && account && addressNotZero(contractAddress)
+  );
+  const numConfirmations = getNumConfirmations(activeChain);
+  const { address: contractAddressTest, ABI: contractABITest } =
+    useGetContract("TestContract");
   const ifaceContractTest = new utils.Interface(contractABITest);
 
   const [disabled, setDisabled] = useState(false);
@@ -44,6 +48,7 @@ const SubmitTransaction = ({
   ];
 
   const {
+    data: dataSubmit,
     error: errorSubmit,
     isError: isErrorSubmit,
     isLoading: isLoadingSubmit,
@@ -56,11 +61,15 @@ const SubmitTransaction = ({
     },
     "submitTransaction",
     {
-      enabled: Boolean(
-        activeChain && account && addressNotZero(contractAddress)
-      ),
+      enabled: isEnabled,
     }
   );
+  const { status: statusSubmitWait } = useWaitForTransaction({
+    hash: dataSubmit?.hash,
+    wait: dataSubmit?.wait,
+    confirmations: numConfirmations,
+    enabled: isEnabled,
+  });
 
   const handleValue = (e) => {
     try {
@@ -70,12 +79,10 @@ const SubmitTransaction = ({
       }
     } catch (error) {}
   };
-  const handleClick = () => {
+  const handleSubmit = () => {
     if (callData && callData !== "") {
-      setDisabled(true);
       let defaultValue = 0;
       if (value || parseFloat(value) >= 0) defaultValue = value;
-
       let data;
       if (callData === "1") {
         data = ifaceContractTest.encodeFunctionData("callMe", [
@@ -85,7 +92,7 @@ const SubmitTransaction = ({
       } else if (callData === "2") {
         data = ifaceContractTest.encodeFunctionData("callMeString", [paramAbc]);
       }
-
+      setDisabled(true);
       writeSubmit({
         args: [
           contractAddressTest,
@@ -93,18 +100,12 @@ const SubmitTransaction = ({
           data,
         ],
       });
-      setDisabled(false);
-      setValue("0");
-      setParam1("0");
-      setParam2("0");
-      setParamAbc("");
-      //setCallData("1");
     }
   };
 
   const handleParam1 = (e) => {
     try {
-      const value = utils.parseEther(e.currentTarget.value);
+      const value = utils.parseEther(e.target.value);
       if (value >= 0) {
         setParam1(e.currentTarget.value);
       }
@@ -114,7 +115,7 @@ const SubmitTransaction = ({
   };
   const handleParam2 = (e) => {
     try {
-      const value = utils.parseEther(e.currentTarget.value);
+      const value = utils.parseEther(e.target.value);
       if (value >= 0) {
         setParam2(e.currentTarget.value);
       }
@@ -124,120 +125,112 @@ const SubmitTransaction = ({
   };
 
   useEffect(() => {
-    if (statusSubmit !== "loading") {
+    if (statusSubmit !== "loading" && statusSubmitWait !== "loading") {
       if (disabled) setDisabled(false);
+      setValue("0");
+      setParam1("0");
+      setParam2("0");
+      setParamAbc("");
     }
     // eslint-disable-next-line
-  }, [statusSubmit]);
+  }, [statusSubmit, statusSubmitWait]);
 
+  if (!isMounted) return <></>;
   return (
-    <Stack
-      direction="column"
-      justifyContent="flex-start"
-      alignItems="flex-start"
-      spacing={1}
-      padding={1}
-    >
-      {isMounted && (
-        <>
-          <Stack
-            direction="column"
-            justifyContent="flex-start"
-            alignItems="flex-start"
-            spacing={1}
-            padding={1}
-          >
-            <Typography>Submit a transaction</Typography>
+    <Paper elevation={4}>
+      <Stack
+        direction="column"
+        justifyContent="flex-start"
+        alignItems="flex-start"
+        spacing={1}
+        padding={1}
+      >
+        <Typography variant="h6" gutterBottom component="div">
+          Submit a transaction
+        </Typography>
 
+        <TextField
+          value={callData}
+          onChange={(e) => setCallData(e.target.value)}
+          disabled={disabled}
+          select
+          size="small"
+        >
+          {callDataValues.map((fnCall) => (
+            <MenuItem key={fnCall.value} value={fnCall.value}>
+              {fnCall.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          variant="standard"
+          type="number"
+          margin="normal"
+          label="Value (in gwei)"
+          value={value}
+          onChange={handleValue}
+          disabled={disabled}
+          size="small"
+        />
+        {callData === "1" ? (
+          <>
             <TextField
-              value={callData}
-              onChange={(e) => setCallData(e.target.value)}
-              disabled={disabled}
-              select
-            >
-              {callDataValues.map((fnCall) => (
-                <MenuItem key={fnCall.value} value={fnCall.value}>
-                  {fnCall.label}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
               variant="standard"
-              type="text"
+              type="number"
+              required
               margin="normal"
-              label="Value (in gwei)"
-              value={value}
-              onChange={handleValue}
+              label="Parameter 1"
+              value={param1}
+              onChange={handleParam1}
               disabled={disabled}
+              size="small"
             />
-            {callData === "1" ? (
-              <>
-                <TextField
-                  inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-                  variant="standard"
-                  type="text"
-                  required
-                  margin="normal"
-                  label="Parameter 1"
-                  value={param1}
-                  onChange={handleParam1}
-                  disabled={disabled}
-                />
-                <TextField
-                  inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-                  variant="standard"
-                  type="text"
-                  required
-                  margin="normal"
-                  label="Parameter 2"
-                  value={param2}
-                  onChange={handleParam2}
-                  disabled={disabled}
-                />
-              </>
-            ) : (
-              <>
-                <TextField
-                  fullWidth
-                  value={paramAbc}
-                  required
-                  variant="standard"
-                  margin="normal"
-                  label="Parameter _abc (string)"
-                  onChange={(e) => setParamAbc(e.target.value)}
-                  disabled={disabled}
-                />
-              </>
-            )}
-          </Stack>
-          <Stack
-            direction="column"
-            justifyContent="center"
-            alignItems="center"
-            spacing={1}
-            padding={1}
-          >
-            <Button
-              variant="contained"
-              onClick={handleClick}
-              disabled={
-                disabled ||
-                isLoadingSubmit ||
-                (callData === "2" && !paramAbc) ||
-                (callData === "1" && (!param1 || !param2))
-              }
-              endIcon={<GetStatusIcon status={statusSubmit} />}
-            >
-              Submit
-            </Button>
-            {isErrorSubmit && (
-              <ShowError flag={isErrorSubmit} error={errorSubmit} />
-            )}
-          </Stack>
-        </>
-      )}
-    </Stack>
+            <TextField
+              variant="standard"
+              type="number"
+              required
+              margin="normal"
+              label="Parameter 2"
+              value={param2}
+              onChange={handleParam2}
+              disabled={disabled}
+              size="small"
+            />
+          </>
+        ) : (
+          <>
+            <TextField
+              fullWidth
+              value={paramAbc}
+              required
+              variant="standard"
+              margin="normal"
+              label="Parameter _abc (string)"
+              onChange={(e) => setParamAbc(e.target.value)}
+              disabled={disabled}
+              size="small"
+            />
+          </>
+        )}
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={
+            disabled ||
+            isLoadingSubmit ||
+            (callData === "2" && !paramAbc) ||
+            (callData === "1" && (!param1 || !param2))
+          }
+          size="small"
+          endIcon={<GetStatusIcon status={statusSubmit} />}
+        >
+          Submit
+        </Button>
+        {isErrorSubmit && (
+          <ShowError flag={isErrorSubmit} error={errorSubmit} />
+        )}
+      </Stack>
+    </Paper>
   );
 };
 

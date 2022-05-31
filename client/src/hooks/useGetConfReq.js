@@ -3,6 +3,7 @@ import { BigNumber } from "ethers";
 import { addressNotZero } from "../utils/utils";
 
 const useGetConfReq = (activeChain, contractAddress, contractABI) => {
+  const isEnabled = Boolean(activeChain && addressNotZero(contractAddress));
   const {
     data: confReq,
     isLoading: isLoadingConfReq,
@@ -15,8 +16,8 @@ const useGetConfReq = (activeChain, contractAddress, contractABI) => {
     },
     "numConfirmationsRequired",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 

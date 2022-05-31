@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { useContractRead, useContractWrite } from "wagmi";
+import {
+  useContractRead,
+  useContractWrite,
+  useWaitForTransaction,
+} from "wagmi";
 import { BigNumber, utils } from "ethers";
 
 import TableCell from "@mui/material/TableCell";
@@ -8,25 +12,27 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { addressNotZero } from "../utils/utils";
 import { useIsMounted } from "../hooks";
-import { ShowError } from ".";
-import { GetStatusIcon } from "../components";
+import { ShowError, GetStatusIcon } from "../components";
 
 const GetOneTransaction = ({
   txIdx,
-  numConfirmationsRequired,
   iface,
   activeChain,
   contractAddress,
   contractABI,
+  numConfirmationsRequired,
+  txConfirmations,
 }) => {
   const isMounted = useIsMounted();
+  const isEnabled = Boolean(
+    isMounted && activeChain && addressNotZero(contractAddress)
+  );
   const [disabled, setDisabled] = useState(false);
 
   const {
     data: tx,
     isLoading: isLoadingTx,
     isError: isErrorTx,
-    isSuccess: isSuccessTx,
     error: errorTx,
     status: statusTx,
   } = useContractRead(
@@ -37,12 +43,13 @@ const GetOneTransaction = ({
     "getTransaction",
     {
       args: [BigNumber.from(txIdx)],
-      watch: true,
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
   const {
+    data: dataConfirm,
     error: errorConfirm,
     isError: isErrorConfirm,
     isLoading: isLoadingConfirm,
@@ -55,11 +62,18 @@ const GetOneTransaction = ({
     },
     "confirmTransaction",
     {
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      enabled: isEnabled,
     }
   );
+  const { status: statusConfirmWait } = useWaitForTransaction({
+    hash: dataConfirm?.hash,
+    wait: dataConfirm?.wait,
+    confirmations: txConfirmations,
+    enabled: isEnabled,
+  });
 
   const {
+    data: dataRevoke,
     error: errorRevoke,
     isError: isErrorRevoke,
     isLoading: isLoadingRevoke,
@@ -72,11 +86,18 @@ const GetOneTransaction = ({
     },
     "revokeConfirmation",
     {
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      enabled: isEnabled,
     }
   );
+  const { status: statusRevokeWait } = useWaitForTransaction({
+    hash: dataRevoke?.hash,
+    wait: dataRevoke?.wait,
+    confirmations: txConfirmations,
+    enabled: isEnabled,
+  });
 
   const {
+    data: dataExecute,
     error: errorExecute,
     isError: isErrorExecute,
     isLoading: isLoadingExecute,
@@ -89,52 +110,61 @@ const GetOneTransaction = ({
     },
     "executeTransaction",
     {
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      enabled: isEnabled,
     }
   );
+  const { status: statusExecuteWait } = useWaitForTransaction({
+    hash: dataExecute?.hash,
+    wait: dataExecute?.wait,
+    confirmations: txConfirmations,
+    enabled: isEnabled,
+  });
 
   const handleConfirm = (e) => {
     e.preventDefault();
-    setDisabled(true);
-    writeConfirm({ args: [BigNumber.from(e.currentTarget.value)] });
+    if (e.target.value && parseInt(e.target.value) >= 0) {
+      setDisabled(true);
+      writeConfirm({ args: [BigNumber.from(e.target.value)] });
+    }
   };
 
   const handleRevoke = (e) => {
     e.preventDefault();
     setDisabled(true);
-    writeRevoke({ args: [BigNumber.from(e.currentTarget.value)] });
+    writeRevoke({ args: [BigNumber.from(e.target.value)] });
   };
 
   const handleExecute = (e) => {
     e.preventDefault();
     setDisabled(true);
-    writeExecute({ args: [BigNumber.from(e.currentTarget.value)] });
+    writeExecute({ args: [BigNumber.from(e.target.value)] });
   };
 
   useEffect(() => {
-    if (statusTx !== "loading") {
-      if (disabled) setDisabled(false);
-    }
-    if (statusConfirm !== "loading") {
-      if (disabled) setDisabled(false);
-    }
-    if (statusRevoke !== "loading") {
-      if (disabled) setDisabled(false);
-    }
-    if (statusExecute !== "loading") {
+    if (
+      statusTx !== "loading" &&
+      statusConfirm !== "loading" &&
+      statusConfirmWait !== "loading" &&
+      statusRevoke !== "loading" &&
+      statusRevokeWait !== "loading" &&
+      statusExecute !== "loading" &&
+      statusExecuteWait !== "loading"
+    ) {
       if (disabled) setDisabled(false);
     }
     // eslint-disable-next-line
-  }, [statusTx, statusConfirm, statusRevoke, statusExecute]);
+  }, [
+    statusTx,
+    statusConfirm,
+    statusConfirmWait,
+    statusRevoke,
+    statusRevokeWait,
+    statusExecute,
+    statusExecuteWait,
+  ]);
 
-  if (isLoadingTx)
-    return (
-      <TableRow key={txIdx}>
-        <TableCell align="right">
-          Loading Transaction...<GetStatusIcon status="loading"></GetStatusIcon>
-        </TableCell>
-      </TableRow>
-    );
+  if (!isMounted || isLoadingTx) return <></>;
+
   //const trTo = tx[0];
   const value = utils.formatUnits(tx[1]?.toString(), "gwei");
   const data = tx[2];
@@ -150,106 +180,92 @@ const GetOneTransaction = ({
     }
   }
   const executed = tx[3].toString();
-  const txNumConfirmations = tx[4].toString();
+  const txNumConfirmations = tx[4];
+  const txNumConfirmationsFormatted = txNumConfirmations.toString();
+
+  const txNumConfirmationsInt = parseInt(txNumConfirmations.toString());
+  const numConfirmationsRequiredInt = parseInt(
+    numConfirmationsRequired.toString()
+  );
 
   return (
-    <>
-      {isMounted && (
-        <TableRow key={txIdx}>
-          {isSuccessTx ? (
-            <>
-              <TableCell align="right">{txIdx}</TableCell>
-              {/* <TableCell align="left">{shortenAddress(trTo)}</TableCell> */}
-              <TableCell align="left">
-                {paramAbc ? (
-                  <>
-                    TestContract.callMeString("{paramAbc}"), value: {value} gwei
-                  </>
-                ) : (
-                  <>
-                    TestContract.callMe({param0},{param1}), value: {value} gwei
-                  </>
-                )}
-              </TableCell>
-              <TableCell align="left">{executed}</TableCell>
-              <TableCell align="right">{txNumConfirmations}</TableCell>
-              <TableCell align="left">
-                {executed !== "true" && (
-                  <Stack
-                    direction="row"
-                    justifyContent="flex-start"
-                    alignItems="flex-start"
-                    spacing={0.5}
-                  >
-                    {parseInt(txNumConfirmations) <
-                      parseInt(numConfirmationsRequired.toString()) && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={disabled || isLoadingConfirm}
-                        value={txIdx}
-                        onClick={handleConfirm}
-                        endIcon={<GetStatusIcon status={statusConfirm} />}
-                      >
-                        Confirm?
-                      </Button>
-                    )}
-                    {parseInt(txNumConfirmations) > 0 && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={disabled || isLoadingRevoke}
-                        value={txIdx}
-                        onClick={handleRevoke}
-                        endIcon={<GetStatusIcon status={statusRevoke} />}
-                      >
-                        Revoke?
-                      </Button>
-                    )}
-                    {txNumConfirmations ===
-                      numConfirmationsRequired.toString() && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={disabled || isLoadingExecute}
-                        value={txIdx}
-                        onClick={handleExecute}
-                        endIcon={<GetStatusIcon status={statusExecute} />}
-                      >
-                        Execute?
-                      </Button>
-                    )}
-                  </Stack>
-                )}
-              </TableCell>
-              <TableCell align="right">
-                {isErrorConfirm && (
-                  <ShowError flag={isErrorConfirm} error={errorConfirm} />
-                )}
-                {isErrorRevoke && (
-                  <ShowError flag={isErrorRevoke} error={errorRevoke} />
-                )}
-                {isErrorExecute && (
-                  <ShowError flag={isErrorExecute} error={errorExecute} />
-                )}
-              </TableCell>
-            </>
-          ) : (
-            <>
-              <TableCell align="right"></TableCell>
-              {/* <TableCell align="left"></TableCell> */}
-              <TableCell align="left">
-                <ShowError flag={isErrorTx} error={errorTx} />
-              </TableCell>
-              <TableCell align="left"></TableCell>
-              <TableCell align="right"></TableCell>
-              <TableCell align="left"></TableCell>
-              <TableCell align="left"></TableCell>
-            </>
+    <TableRow key={txIdx}>
+      <TableCell align="right">{txIdx}</TableCell>
+      <TableCell align="left">
+        {paramAbc ? (
+          <>
+            callMeString("{paramAbc}"), {value} gwei
+          </>
+        ) : (
+          <>
+            callMe({param0},{param1}), {value} gwei
+          </>
+        )}
+      </TableCell>
+      <TableCell align="left">{executed}</TableCell>
+      <TableCell align="right">{txNumConfirmationsFormatted}</TableCell>
+      <TableCell align="left">
+        {executed !== "true" && (
+          <Stack
+            direction="row"
+            justifyContent="flex-start"
+            alignItems="flex-start"
+            spacing={0.5}
+          >
+            {txNumConfirmationsInt < numConfirmationsRequiredInt && (
+              <Button
+                variant="contained"
+                size="small"
+                disabled={disabled || isLoadingConfirm}
+                value={txIdx}
+                onClick={handleConfirm}
+                endIcon={<GetStatusIcon status={statusConfirm} />}
+              >
+                Confirm?
+              </Button>
+            )}
+            {txNumConfirmationsInt > 0 && (
+              <Button
+                variant="contained"
+                size="small"
+                disabled={disabled || isLoadingRevoke}
+                value={txIdx}
+                onClick={handleRevoke}
+                endIcon={<GetStatusIcon status={statusRevoke} />}
+              >
+                Revoke?
+              </Button>
+            )}
+            {txNumConfirmationsInt === numConfirmationsRequiredInt && (
+              <Button
+                variant="contained"
+                size="small"
+                disabled={disabled || isLoadingExecute}
+                value={txIdx}
+                onClick={handleExecute}
+                endIcon={<GetStatusIcon status={statusExecute} />}
+              >
+                Execute?
+              </Button>
+            )}
+          </Stack>
+        )}
+      </TableCell>
+      {(isErrorTx || isErrorConfirm || isErrorRevoke || isErrorExecute) && (
+        <TableCell align="right">
+          {isErrorTx && <ShowError flag={isErrorTx} error={errorTx} />}
+          {isErrorConfirm && (
+            <ShowError flag={isErrorConfirm} error={errorConfirm} />
           )}
-        </TableRow>
+          {isErrorRevoke && (
+            <ShowError flag={isErrorRevoke} error={errorRevoke} />
+          )}
+          {isErrorExecute && (
+            <ShowError flag={isErrorExecute} error={errorExecute} />
+          )}
+        </TableCell>
       )}
-    </>
+    </TableRow>
   );
 };
 

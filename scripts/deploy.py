@@ -17,8 +17,8 @@ def main():
     randomValue = random.randint(0, 1000)
     tx = create_and_confirm_tx(
         multiSigWallet, testContract, randomValue, get_account())
-    execute_tx(tx, multiSigWallet, get_account())
-    print_values(multiSigWallet, testContract)
+    #execute_tx(tx, multiSigWallet, get_account())
+    #print_values(multiSigWallet, testContract)
 
 
 def params_msw():

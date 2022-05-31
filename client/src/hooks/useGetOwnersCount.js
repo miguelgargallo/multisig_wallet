@@ -3,6 +3,7 @@ import { BigNumber } from "ethers";
 import { addressNotZero } from "../utils/utils";
 
 const useGetOwnersCount = (activeChain, contractAddress, contractABI) => {
+  const isEnabled = Boolean(activeChain && addressNotZero(contractAddress));
   const {
     data: txCount,
     isLoading: isLoadingTxCount,
@@ -15,8 +16,8 @@ const useGetOwnersCount = (activeChain, contractAddress, contractABI) => {
     },
     "getOwnersCount",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 

@@ -1,21 +1,19 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { MultisigWallet, Error } from "./pages";
-import { MenuAppBar } from "./components";
+import { MultisigWalletContainer, SharedLayout, Error } from "./pages";
 import { useIsMounted } from "./hooks";
 
 function App() {
   const isMounted = useIsMounted();
-  if (!isMounted) return null;
+  if (!isMounted) return <></>;
   return (
-    <>
-      <MenuAppBar />
-      <BrowserRouter>
-        <Routes>
-          <Route index element={<MultisigWallet />} />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<SharedLayout />}>
+          <Route index element={<MultisigWalletContainer />} />
           <Route path="*" element={<Error />} />
-        </Routes>
-      </BrowserRouter>
-    </>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

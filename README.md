@@ -23,8 +23,7 @@ To install the required packages.
 
 ### `configure .env`
 
-Configure .env file in the mutisig_wallet folder
-An example of .env file :
+Configure .env file in the multisig_wallet folder.
 
 ```bash .env
 PRIVATE_KEY=0xabcdef
@@ -32,21 +31,15 @@ RINKEBY_RPC_URL ="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
 UPDATE_FRONT_END=yes
 ```
 
-### `compile the smartcontracts`
-
-```
-brownie compile
-```
-
 ### `start hardhat`
 
-Please make sure to start hardhat from the mutisig_wallet folder in one terminal
+Please make sure to start hardhat from the multisig_wallet folder in one terminal:
 
 ```bash
 npx hardhat node
 ```
 
-### `add hh-local`
+### `add brownie network hh-local`
 
 Then go to another terminal and add hh-local as a permanent network in brownie
 
@@ -61,6 +54,18 @@ In the same multisig_wallet folder, deploy the contracts :
 ```bash
 brownie run scripts/deploy.py --network hh-local
 brownie run scripts/deploy.py --network rinkeby
+```
+
+In the client folder, in src/index.js, uncomment chain.hardhat, in order to deploy on hardhat too:
+
+```
+const { provider, chains } = configureChains(
+  [
+    //chain.hardhat,
+    chain.rinkeby,
+  ],
+  [alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }), publicProvider()]
+);
 ```
 
 ### `configure and start the client app`
@@ -84,7 +89,7 @@ An example of .env file :
 GENERATE_SOURCEMAP=false
 ALCHEMY_ID="your-api-key"
 REACT_APP_RINKEBY_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
-REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.1"
+REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.2"
 ```
 
 ### `start the application`

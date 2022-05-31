@@ -5,7 +5,7 @@ import Stack from "@mui/material/Stack";
 import { Paper } from "@mui/material";
 
 import { utils } from "ethers";
-import { addressNotZero } from "../utils/utils";
+import { addressNotZero, formatBalance } from "../utils/utils";
 
 import { useBalance, useSendTransaction } from "wagmi";
 import { useIsMounted, useGetConfReq } from "../hooks";
@@ -18,6 +18,9 @@ const GetMutisigContract = ({
   account,
 }) => {
   const isMounted = useIsMounted();
+  const isEnabled = Boolean(
+    isMounted && activeChain && account && addressNotZero(contractAddress)
+  );
   const [disabled, setDisabled] = useState(false);
 
   const {
@@ -29,8 +32,8 @@ const GetMutisigContract = ({
     status: statusBalance,
   } = useBalance({
     addressOrName: contractAddress,
-    watch: true,
-    enabled: Boolean(activeChain && account && addressNotZero(contractAddress)),
+    watch: isEnabled,
+    enabled: isEnabled,
   });
 
   const requiredConfirmations = useGetConfReq(
@@ -46,7 +49,7 @@ const GetMutisigContract = ({
     sendTransaction: FundContract,
     status: statusFundContract,
   } = useSendTransaction({
-    enabled: Boolean(activeChain && account && addressNotZero(contractAddress)),
+    enabled: isEnabled,
   });
 
   const handleFundContract = () => {
@@ -66,44 +69,54 @@ const GetMutisigContract = ({
     // eslint-disable-next-line
   }, [statusBalance, statusFundContract]);
 
+  if (!isMounted) return <></>;
   return (
-    <Stack
-      direction="column"
-      justifyContent="flex-start"
-      alignItems="flex-start"
-      spacing={1}
-      padding={1}
-    >
-      {isMounted && (
-        <Paper>
-          <Typography>Contract Address: {contractAddress}</Typography>
-          <Typography>
-            Required Confirmations: from {requiredConfirmations?.toString()}{" "}
-            owner(s)
-          </Typography>
-          {isSuccessBalance && (
-            <>
-              <Typography>Balance: {balance?.formatted} ETH </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleFundContract}
-                disabled={disabled || isLoadingFundContract}
-                endIcon={<GetStatusIcon status={statusFundContract} />}
-              >
-                Fund Contract (with 5 gwei)
-              </Button>
-            </>
-          )}
-          {isErrorBalance && (
-            <ShowError flag={isErrorBalance} error={errorBalance} />
-          )}
-          {isErrorFundContract && (
-            <ShowError flag={isErrorFundContract} error={errorFundContract} />
-          )}
-        </Paper>
-      )}
-    </Stack>
+    <Paper elevation={4}>
+      <Stack
+        direction="column"
+        justifyContent="flex-start"
+        alignItems="flex-start"
+        spacing={1}
+        padding={1}
+      >
+        <Typography variant="h6" gutterBottom component="div">
+          Multisig Contract: {contractAddress}
+        </Typography>
+
+        <Typography>
+          Required Confirmations: from {requiredConfirmations?.toString()}{" "}
+          owner(s)
+        </Typography>
+        {isSuccessBalance && (
+          <Stack
+            direction="row"
+            justifyContent="flex-start"
+            alignItems="flex-start"
+            spacing={1}
+            padding={0}
+          >
+            <Typography>
+              Balance: {formatBalance(balance?.value)} ETH{" "}
+            </Typography>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleFundContract}
+              disabled={disabled || isLoadingFundContract}
+              endIcon={<GetStatusIcon status={statusFundContract} />}
+            >
+              Fund Contract (with 5 gwei)
+            </Button>
+          </Stack>
+        )}
+        {isErrorBalance && (
+          <ShowError flag={isErrorBalance} error={errorBalance} />
+        )}
+        {isErrorFundContract && (
+          <ShowError flag={isErrorFundContract} error={errorFundContract} />
+        )}
+      </Stack>
+    </Paper>
   );
 };
 

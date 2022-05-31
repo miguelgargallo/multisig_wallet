@@ -43,63 +43,65 @@ const Graph = () => {
     );
 
   return (
-    <Stack
-      direction="column"
-      justifyContent="flex-start"
-      alignItems="flex-start"
-      padding={1}
-      spacing={1}
-    >
-      <Typography>
-        MultisignWallet contract events queried from The Graph
-      </Typography>
-      <TableContainer component={Paper}>
-        <Table size="small" aria-label="confirmTransactions">
-          <TableHead>
-            <TableRow>
-              <TableCell align="left">Tx</TableCell>
-              <TableCell align="left">Owner</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.confirmTransactions.map(({ id, owner, txIndex }) => {
-              return (
-                <TableRow key={id}>
-                  <TableCell align="left">{txIndex}</TableCell>
-                  <TableCell align="left">{owner}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TableContainer component={Paper}>
-        <Table size="small" aria-label="confirmTransactions">
-          <TableHead>
-            <TableRow>
-              <TableCell align="left">Sender</TableCell>
-              <TableCell align="left">Amount</TableCell>
-              <TableCell align="left">Balance</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.deposits.map(({ id, sender, amount, balance }) => {
-              return (
-                <TableRow key={id}>
-                  <TableCell align="left">{sender}</TableCell>
-                  <TableCell align="left">
-                    {utils.formatEther(amount)}
-                  </TableCell>
-                  <TableCell align="left">
-                    {utils.formatEther(balance)}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Stack>
+    <Paper elevation={4}>
+      <Stack
+        direction="column"
+        justifyContent="flex-start"
+        alignItems="flex-start"
+        padding={1}
+        spacing={0}
+      >
+        <Typography>
+          MultisignWallet contract events queried from The Graph
+        </Typography>
+        <TableContainer>
+          <Table size="small" aria-label="confirmTransactions">
+            <TableHead>
+              <TableRow>
+                <TableCell align="left">Tx</TableCell>
+                <TableCell align="left">Owner</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.confirmTransactions.map(({ id, owner, txIndex }) => {
+                return (
+                  <TableRow key={id}>
+                    <TableCell align="left">{txIndex}</TableCell>
+                    <TableCell align="left">{owner}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TableContainer>
+          <Table size="small" aria-label="confirmTransactions">
+            <TableHead>
+              <TableRow>
+                <TableCell align="left">Sender</TableCell>
+                <TableCell align="left">Amount</TableCell>
+                <TableCell align="left">Balance</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.deposits.map(({ id, sender, amount, balance }) => {
+                return (
+                  <TableRow key={id}>
+                    <TableCell align="left">{sender}</TableCell>
+                    <TableCell align="left">
+                      {utils.formatUnits(amount, "gwei")} gwei
+                    </TableCell>
+                    <TableCell align="left">
+                      {utils.formatUnits(balance, "gwei")} gwei
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Stack>
+    </Paper>
   );
 };
 

@@ -3,10 +3,10 @@ import { constants, utils } from "ethers";
 
 import networkMapping from "../chain-info/map.json";
 
-import contractMultisigWallet from "../chain-info/MultiSigWallet.json";
-import contractTestContract from "../chain-info/TestContract.json";
+import contract1 from "../chain-info/MultiSigWallet.json";
+import contract2 from "../chain-info/TestContract.json";
 
-const GetContract = (contractName) => {
+const useGetContract = (contractName) => {
   const { activeChain } = useNetwork();
   let contractAddress;
 
@@ -18,24 +18,25 @@ const GetContract = (contractName) => {
       : constants.AddressZero;
   }
 
-  const { abi: abiMultisignWallet } = contractMultisigWallet;
-  const { abi: abiTestContract } = contractTestContract;
+  const { abi: abiContract1 } = contract1;
+  const { abi: abiContract2 } = contract2;
 
   const formattedAddress = utils.getAddress(contractAddress);
 
   if (contractName === "MultiSigWallet") {
     return {
-      contractAddress: activeChain ? formattedAddress : constants.AddressZero,
-      contractABI: abiMultisignWallet,
+      address: activeChain ? formattedAddress : constants.AddressZero,
+      ABI: abiContract1,
     };
   }
   if (contractName === "TestContract") {
     return {
-      contractAddress: activeChain ? formattedAddress : constants.AddressZero,
-      contractABI: abiTestContract,
+      address: activeChain ? formattedAddress : constants.AddressZero,
+      ABI: abiContract2,
     };
   }
-  return { contractAddress: formattedAddress, contractABI: abiMultisignWallet };
+
+  return { address: formattedAddress, ABI: abiContract1 };
 };
 
-export default GetContract;
+export default useGetContract;

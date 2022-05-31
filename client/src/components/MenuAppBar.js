@@ -25,7 +25,11 @@ const MenuAppBar = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Multisignature Wallet
           </Typography>
-          <ConnectButton />
+          <ConnectButton
+            accountStatus="address"
+            chainStatus="name"
+            showBalance={true}
+          />
         </Toolbar>
       </AppBar>
     </Box>

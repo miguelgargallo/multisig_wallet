@@ -1,10 +1,5 @@
 import Error from "./Error";
-// import Landing from "./Landing";
-// import MyToken from "./MyToken";
-import MultisigWallet from "./MultisigWallet";
+import MultisigWalletContainer from "./MultisigWalletContainer";
+import SharedLayout from "./SharedLayout";
 
-export {
-  Error,
-  // Landing, MyToken,
-  MultisigWallet,
-};
+export { Error, MultisigWalletContainer, SharedLayout };

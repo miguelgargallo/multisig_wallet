@@ -2,17 +2,14 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "normalize.css";
 import "@rainbow-me/rainbowkit/styles.css";
-//import "./index.css";
+import "./index.css";
 import App from "./App";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 
-import {
-  apiProvider,
-  configureChains,
-  RainbowKitProvider,
-  getDefaultWallets,
-} from "@rainbow-me/rainbowkit";
-import { createClient, chain, WagmiProvider } from "wagmi";
+import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
+import { createClient, chain, configureChains, WagmiConfig } from "wagmi";
+import { alchemyProvider } from "wagmi/providers/alchemy";
+import { publicProvider } from "wagmi/providers/public";
 
 if (
   !process.env.REACT_APP_RINKEBY_URL ||
@@ -24,12 +21,15 @@ if (
   );
 
 const { provider, chains } = configureChains(
-  [chain.hardhat, chain.rinkeby],
-  [apiProvider.alchemy(process.env.ALCHEMY_ID), apiProvider.fallback()]
+  [
+    //chain.hardhat,
+    chain.rinkeby,
+  ],
+  [alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }), publicProvider()]
 );
 
 const { connectors } = getDefaultWallets({
-  appName: "Ethereum Application with Wagmi and Rainbowkit",
+  appName: "Ethereum Application with Wagmi, Rainbowkit and Material-UI",
   chains,
 });
 
@@ -46,13 +46,13 @@ const apolloClient = new ApolloClient({
 
 ReactDOM.render(
   // <React.StrictMode>
-  <WagmiProvider client={wagmiClient}>
+  <WagmiConfig client={wagmiClient}>
     <RainbowKitProvider chains={chains}>
       <ApolloProvider client={apolloClient}>
         <App />
       </ApolloProvider>
     </RainbowKitProvider>
-  </WagmiProvider>,
+  </WagmiConfig>,
   // </React.StrictMode>,
   document.getElementById("root")
 );

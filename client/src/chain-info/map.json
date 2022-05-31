@@ -1,18 +1,6 @@
 {
-  "31337": {
-    "MultiSigWallet": [
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-    ],
-    "TestContract": [
-      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-    ]
-  },
   "4": {
-    "MultiSigWallet": [
-      "0xD89Af79154EbbC02Ab719d57b2524C89A7dCF01e"
-    ],
-    "TestContract": [
-      "0x3bFB4b844F323Fd214F68E63478B61757d35227c"
-    ]
+    "MultiSigWallet": ["0x17e62a1479d2C52AF6f136510FF31D4335FAE805"],
+    "TestContract": ["0x0B14521Cfe28D5097060e1b84d046d4E6a0F3F31"]
   }
 }
