@@ -89,7 +89,7 @@ An example of .env file :
 GENERATE_SOURCEMAP=false
 ALCHEMY_ID="your-api-key"
 REACT_APP_RINKEBY_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
-REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.2"
+REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.3"
 ```
 
 ### `start the application`
