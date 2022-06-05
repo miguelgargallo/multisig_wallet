@@ -52,8 +52,8 @@ brownie networks add Ethereum hh-local host=http://127.0.0.1 chainid=31337
 In the same multisig_wallet folder, deploy the contracts :
 
 ```bash
-brownie run scripts/deploy.py --network hh-local
-brownie run scripts/deploy.py --network rinkeby
+brownie run scripts/brownie/deploy.py --network hh-local
+brownie run scripts/brownie/deploy.py --network rinkeby
 ```
 
 In the client folder, in src/index.js, uncomment chain.hardhat, in order to deploy on hardhat too:
