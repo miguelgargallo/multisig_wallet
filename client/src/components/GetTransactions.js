@@ -16,11 +16,9 @@ import {
 
 import { utils } from "ethers";
 import { GetOneTransaction } from "../components";
-import { getNumConfirmations } from "../utils/utils";
 
 const GetTransactions = ({ activeChain, contractAddress, contractABI }) => {
   const isMounted = useIsMounted();
-  const txConfirmations = getNumConfirmations(activeChain);
   const { ABI: contractABITest } = useGetContract("TestContract");
   const ifaceContractTest = new utils.Interface(contractABITest);
 
@@ -74,7 +72,6 @@ const GetTransactions = ({ activeChain, contractAddress, contractABI }) => {
                     contractAddress={contractAddress}
                     contractABI={contractABI}
                     numConfirmationsRequired={numConfirmationsRequired}
-                    txConfirmations={txConfirmations}
                   />
                 );
               })}

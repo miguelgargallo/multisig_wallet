@@ -3,6 +3,7 @@ import useGetTransactionsCount from "./useGetTransactionsCount";
 import useGetOwnersCount from "./useGetOwnersCount";
 import useGetConfReq from "./useGetConfReq";
 import useGetContract from "./useGetContract";
+import useGetFuncWrite from "./useGetFuncWrite";
 
 export {
   useIsMounted,
@@ -10,4 +11,5 @@ export {
   useGetTransactionsCount,
   useGetOwnersCount,
   useGetConfReq,
+  useGetFuncWrite,
 };

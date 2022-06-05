@@ -10,8 +10,15 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 
+import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 import { useQuery, gql } from "@apollo/client";
 import { utils } from "ethers";
+import { shortenAddress } from "../utils/utils";
+
+const apolloClient = new ApolloClient({
+  cache: new InMemoryCache(),
+  uri: process.env.REACT_APP_GRAPH_URL,
+});
 
 const QUERY = gql`
   {
@@ -29,7 +36,15 @@ const QUERY = gql`
   }
 `;
 
-const Graph = () => {
+const GraphMultisignWallet = () => {
+  return (
+    <ApolloProvider client={apolloClient}>
+      <ShowGraphMultisignWallet />
+    </ApolloProvider>
+  );
+};
+
+const ShowGraphMultisignWallet = () => {
   const { loading, error, data } = useQuery(QUERY, {
     pollInterval: 500,
   });
@@ -67,7 +82,7 @@ const Graph = () => {
                 return (
                   <TableRow key={id}>
                     <TableCell align="left">{txIndex}</TableCell>
-                    <TableCell align="left">{owner}</TableCell>
+                    <TableCell align="left">{shortenAddress(owner)}</TableCell>
                   </TableRow>
                 );
               })}
@@ -87,7 +102,7 @@ const Graph = () => {
               {data.deposits.map(({ id, sender, amount, balance }) => {
                 return (
                   <TableRow key={id}>
-                    <TableCell align="left">{sender}</TableCell>
+                    <TableCell align="left">{shortenAddress(sender)}</TableCell>
                     <TableCell align="left">
                       {utils.formatUnits(amount, "gwei")} gwei
                     </TableCell>
@@ -105,4 +120,4 @@ const Graph = () => {
   );
 };
 
-export default Graph;
+export default GraphMultisignWallet;

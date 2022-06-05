@@ -7,12 +7,10 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 
 import { BigNumber, utils } from "ethers";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
-import { useIsMounted, useGetContract } from "../hooks";
+import { useIsMounted, useGetContract, useGetFuncWrite } from "../hooks";
 
-import { GetStatusIcon } from "../components";
-import { addressNotZero, getNumConfirmations } from "../utils/utils";
-import { ShowError } from ".";
+import { GetStatusIcon, ShowError } from "../components";
+import { addressNotZero } from "../utils/utils";
 
 const SubmitTransaction = ({
   activeChain,
@@ -24,17 +22,24 @@ const SubmitTransaction = ({
   const isEnabled = Boolean(
     isMounted && activeChain && account && addressNotZero(contractAddress)
   );
-  const numConfirmations = getNumConfirmations(activeChain);
   const { address: contractAddressTest, ABI: contractABITest } =
     useGetContract("TestContract");
   const ifaceContractTest = new utils.Interface(contractABITest);
 
   const [disabled, setDisabled] = useState(false);
   const [callData, setCallData] = useState("1");
-  const [param1, setParam1] = useState("0");
-  const [param2, setParam2] = useState("0");
-  const [paramAbc, setParamAbc] = useState("");
-  const [value, setValue] = useState("0");
+  const [input, setInput] = useState({
+    param1: "0",
+    param2: "0",
+    paramAbc: "",
+    value: "0",
+  });
+  const [isErrorInput, setIsErrorInput] = useState({
+    param1: false,
+    param2: false,
+    paramAbc: false,
+    value: false,
+  });
 
   const callDataValues = [
     {
@@ -43,94 +48,104 @@ const SubmitTransaction = ({
     },
     {
       value: "2",
-      label: "TestContract.callMeString(string _abc)",
+      label: "TestContract.callMeString(string abc)",
     },
   ];
 
+  // submit function
   const {
-    data: dataSubmit,
     error: errorSubmit,
     isError: isErrorSubmit,
-    isLoading: isLoadingSubmit,
     write: writeSubmit,
     status: statusSubmit,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusSubmitWait,
+  } = useGetFuncWrite(
     "submitTransaction",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusSubmitWait } = useWaitForTransaction({
-    hash: dataSubmit?.hash,
-    wait: dataSubmit?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
-  const handleValue = (e) => {
-    try {
-      const localvalue = utils.parseEther(e.currentTarget.value);
-      if (localvalue >= 0) {
-        setValue(e.currentTarget.value);
-      }
-    } catch (error) {}
-  };
   const handleSubmit = () => {
     if (callData && callData !== "") {
-      let defaultValue = 0;
-      if (value || parseFloat(value) >= 0) defaultValue = value;
+      let localValue = 0;
       let data;
-      if (callData === "1") {
-        data = ifaceContractTest.encodeFunctionData("callMe", [
-          BigNumber.from(param1),
-          BigNumber.from(param2),
-        ]);
-      } else if (callData === "2") {
-        data = ifaceContractTest.encodeFunctionData("callMeString", [paramAbc]);
+      if (input.value && input.value !== "" && parseFloat(input.value) >= 0) {
+        localValue = BigNumber.from(utils.parseUnits(input.value, "gwei"));
+        if (callData === "1") {
+          if (
+            input.param1 &&
+            input.param1 !== "" &&
+            parseFloat(input.param1) >= 0
+          ) {
+            if (
+              input.param2 &&
+              input.param2 !== "" &&
+              parseFloat(input.param2) >= 0
+            ) {
+              data = ifaceContractTest.encodeFunctionData("callMe", [
+                BigNumber.from(input.param1),
+                BigNumber.from(input.param2),
+              ]);
+              setDisabled(true);
+              writeSubmit({
+                args: [contractAddressTest, localValue, data],
+              });
+            } else {
+              setIsErrorInput({ ...isErrorInput, param2: true });
+            }
+          } else {
+            setIsErrorInput({ ...isErrorInput, param1: true });
+          }
+        } else if (callData === "2") {
+          if (input.paramAbc && input.paramAbc !== "") {
+            data = ifaceContractTest.encodeFunctionData("callMeString", [
+              input.paramAbc,
+            ]);
+            setDisabled(true);
+            writeSubmit({
+              args: [contractAddressTest, localValue, data],
+            });
+          } else {
+            setIsErrorInput({ ...isErrorInput, paramAbc: true });
+          }
+        }
+      } else {
+        setIsErrorInput({ ...isErrorInput, value: true });
       }
-      setDisabled(true);
-      writeSubmit({
-        args: [
-          contractAddressTest,
-          BigNumber.from(utils.parseUnits(defaultValue, "gwei")),
-          data,
-        ],
-      });
     }
   };
-
-  const handleParam1 = (e) => {
-    try {
-      const value = utils.parseEther(e.target.value);
-      if (value >= 0) {
-        setParam1(e.currentTarget.value);
-      }
-    } catch (error) {
-      setParam1("");
-    }
+  const handleInputValue = (e) => {
+    setInput({ ...input, value: e.target.value });
+    if (isErrorInput.value) setIsErrorInput({ ...isErrorInput, value: false });
   };
-  const handleParam2 = (e) => {
-    try {
-      const value = utils.parseEther(e.target.value);
-      if (value >= 0) {
-        setParam2(e.currentTarget.value);
-      }
-    } catch (error) {
-      setParam2("");
-    }
+  const handleInputParam1 = (e) => {
+    setInput({ ...input, param1: e.target.value });
+    if (isErrorInput.param1)
+      setIsErrorInput({ ...isErrorInput, param1: false });
+  };
+  const handleInputParam2 = (e) => {
+    setInput({ ...input, param2: e.target.value });
+    if (isErrorInput.param2)
+      setIsErrorInput({ ...isErrorInput, param2: false });
+  };
+  const handleInputParamAbc = (e) => {
+    setInput({ ...input, paramAbc: e.target.value });
+    if (isErrorInput.paramAbc)
+      setIsErrorInput({ ...isErrorInput, paramAbc: false });
   };
 
   useEffect(() => {
     if (statusSubmit !== "loading" && statusSubmitWait !== "loading") {
       if (disabled) setDisabled(false);
-      setValue("0");
-      setParam1("0");
-      setParam2("0");
-      setParamAbc("");
+      setInput({
+        ...input,
+        param1: "0",
+        param2: "0",
+        paramAbc: "",
+        value: "0",
+      });
     }
     // eslint-disable-next-line
   }, [statusSubmit, statusSubmitWait]);
@@ -163,36 +178,39 @@ const SubmitTransaction = ({
           ))}
         </TextField>
         <TextField
+          error={isErrorInput.value}
           variant="standard"
           type="number"
           margin="normal"
           label="Value (in gwei)"
-          value={value}
-          onChange={handleValue}
+          value={input.value}
+          onChange={handleInputValue}
           disabled={disabled}
           size="small"
         />
         {callData === "1" ? (
           <>
             <TextField
+              error={isErrorInput.param1}
               variant="standard"
               type="number"
               required
               margin="normal"
               label="Parameter 1"
-              value={param1}
-              onChange={handleParam1}
+              value={input.param1}
+              onChange={handleInputParam1}
               disabled={disabled}
               size="small"
             />
             <TextField
+              error={isErrorInput.param2}
               variant="standard"
               type="number"
               required
               margin="normal"
               label="Parameter 2"
-              value={param2}
-              onChange={handleParam2}
+              value={input.param2}
+              onChange={handleInputParam2}
               disabled={disabled}
               size="small"
             />
@@ -200,13 +218,14 @@ const SubmitTransaction = ({
         ) : (
           <>
             <TextField
+              error={isErrorInput.paramAbc}
               fullWidth
-              value={paramAbc}
+              value={input.paramAbc}
               required
               variant="standard"
               margin="normal"
-              label="Parameter _abc (string)"
-              onChange={(e) => setParamAbc(e.target.value)}
+              label="Parameter abc"
+              onChange={handleInputParamAbc}
               disabled={disabled}
               size="small"
             />
@@ -215,14 +234,10 @@ const SubmitTransaction = ({
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={
-            disabled ||
-            isLoadingSubmit ||
-            (callData === "2" && !paramAbc) ||
-            (callData === "1" && (!param1 || !param2))
-          }
+          disabled={disabled}
           size="small"
-          endIcon={<GetStatusIcon status={statusSubmit} />}
+          startIcon={<GetStatusIcon status={statusSubmit} />}
+          endIcon={<GetStatusIcon status={statusSubmitWait} />}
         >
           Submit
         </Button>

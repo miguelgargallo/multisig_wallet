@@ -1,6 +1,6 @@
 from brownie import convert, config, accounts, network,  MultiSigWallet, TestContract
 from web3 import Web3
-from scripts.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCHAIN_ENVIRONMENTS
+from scripts.brownie.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCHAIN_ENVIRONMENTS
 
 import eth_abi
 import random

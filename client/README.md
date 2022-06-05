@@ -22,9 +22,8 @@ Configure .env file in the client folder
 
 ```
 GENERATE_SOURCEMAP=false
-ALCHEMY_ID="your-api-key"
-REACT_APP_RINKEBY_URL="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
-REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.1"
+REACT_APP_ALCHEMY_ID="your-api-key"
+REACT_APP_GRAPH_URL="https://api.studio.thegraph.com/query/24949/multisign_wallet/0.0.3"
 ```
 
 ### `deploy on hardhat`

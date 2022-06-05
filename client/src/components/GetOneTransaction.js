@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { useContractRead } from "wagmi";
 import { BigNumber, utils } from "ethers";
 
 import TableCell from "@mui/material/TableCell";
@@ -11,7 +7,7 @@ import TableRow from "@mui/material/TableRow";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { addressNotZero } from "../utils/utils";
-import { useIsMounted } from "../hooks";
+import { useIsMounted, useGetFuncWrite } from "../hooks";
 import { ShowError, GetStatusIcon } from "../components";
 
 const GetOneTransaction = ({
@@ -21,7 +17,6 @@ const GetOneTransaction = ({
   contractAddress,
   contractABI,
   numConfirmationsRequired,
-  txConfirmations,
 }) => {
   const isMounted = useIsMounted();
   const isEnabled = Boolean(
@@ -48,97 +43,50 @@ const GetOneTransaction = ({
     }
   );
 
+  // confirmTransaction function
   const {
-    data: dataConfirm,
     error: errorConfirm,
     isError: isErrorConfirm,
-    isLoading: isLoadingConfirm,
     write: writeConfirm,
     status: statusConfirm,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusConfirmWait,
+  } = useGetFuncWrite(
     "confirmTransaction",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusConfirmWait } = useWaitForTransaction({
-    hash: dataConfirm?.hash,
-    wait: dataConfirm?.wait,
-    confirmations: txConfirmations,
-    enabled: isEnabled,
-  });
 
+  // revokeConfirmation function
   const {
-    data: dataRevoke,
     error: errorRevoke,
     isError: isErrorRevoke,
-    isLoading: isLoadingRevoke,
     write: writeRevoke,
     status: statusRevoke,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusRevokeWait,
+  } = useGetFuncWrite(
     "revokeConfirmation",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusRevokeWait } = useWaitForTransaction({
-    hash: dataRevoke?.hash,
-    wait: dataRevoke?.wait,
-    confirmations: txConfirmations,
-    enabled: isEnabled,
-  });
 
+  // executeTransaction function
   const {
-    data: dataExecute,
     error: errorExecute,
     isError: isErrorExecute,
-    isLoading: isLoadingExecute,
     write: writeExecute,
     status: statusExecute,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusExecuteWait,
+  } = useGetFuncWrite(
     "executeTransaction",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusExecuteWait } = useWaitForTransaction({
-    hash: dataExecute?.hash,
-    wait: dataExecute?.wait,
-    confirmations: txConfirmations,
-    enabled: isEnabled,
-  });
-
-  const handleConfirm = (e) => {
-    e.preventDefault();
-    if (e.target.value && parseInt(e.target.value) >= 0) {
-      setDisabled(true);
-      writeConfirm({ args: [BigNumber.from(e.target.value)] });
-    }
-  };
-
-  const handleRevoke = (e) => {
-    e.preventDefault();
-    setDisabled(true);
-    writeRevoke({ args: [BigNumber.from(e.target.value)] });
-  };
-
-  const handleExecute = (e) => {
-    e.preventDefault();
-    setDisabled(true);
-    writeExecute({ args: [BigNumber.from(e.target.value)] });
-  };
 
   useEffect(() => {
     if (
@@ -163,8 +111,31 @@ const GetOneTransaction = ({
     statusExecuteWait,
   ]);
 
-  if (!isMounted || isLoadingTx) return <></>;
+  const handleConfirm = (e) => {
+    e.preventDefault();
+    if (e.target.value && parseInt(e.target.value) >= 0) {
+      setDisabled(true);
+      writeConfirm({ args: [BigNumber.from(e.target.value)] });
+    }
+  };
 
+  const handleRevoke = (e) => {
+    e.preventDefault();
+    if (e.target.value && parseInt(e.target.value) >= 0) {
+      setDisabled(true);
+      writeRevoke({ args: [BigNumber.from(e.target.value)] });
+    }
+  };
+
+  const handleExecute = (e) => {
+    e.preventDefault();
+    if (e.target.value && parseInt(e.target.value) >= 0) {
+      setDisabled(true);
+      writeExecute({ args: [BigNumber.from(e.target.value)] });
+    }
+  };
+
+  if (!isMounted || isLoadingTx) return <></>;
   //const trTo = tx[0];
   const value = utils.formatUnits(tx[1]?.toString(), "gwei");
   const data = tx[2];
@@ -216,10 +187,11 @@ const GetOneTransaction = ({
               <Button
                 variant="contained"
                 size="small"
-                disabled={disabled || isLoadingConfirm}
+                disabled={disabled}
                 value={txIdx}
                 onClick={handleConfirm}
-                endIcon={<GetStatusIcon status={statusConfirm} />}
+                startIcon={<GetStatusIcon status={statusConfirm} />}
+                endIcon={<GetStatusIcon status={statusConfirmWait} />}
               >
                 Confirm?
               </Button>
@@ -228,10 +200,11 @@ const GetOneTransaction = ({
               <Button
                 variant="contained"
                 size="small"
-                disabled={disabled || isLoadingRevoke}
+                disabled={disabled}
                 value={txIdx}
                 onClick={handleRevoke}
-                endIcon={<GetStatusIcon status={statusRevoke} />}
+                startIcon={<GetStatusIcon status={statusRevoke} />}
+                endIcon={<GetStatusIcon status={statusRevokeWait} />}
               >
                 Revoke?
               </Button>
@@ -240,10 +213,11 @@ const GetOneTransaction = ({
               <Button
                 variant="contained"
                 size="small"
-                disabled={disabled || isLoadingExecute}
+                disabled={disabled}
                 value={txIdx}
                 onClick={handleExecute}
-                endIcon={<GetStatusIcon status={statusExecute} />}
+                startIcon={<GetStatusIcon status={statusExecute} />}
+                endIcon={<GetStatusIcon status={statusExecuteWait} />}
               >
                 Execute?
               </Button>

@@ -53,7 +53,7 @@ const Multisig = () => {
         <Stack
           direction="column"
           spacing={1}
-          padding={0}
+          padding={1}
           justifyContent="flex-start"
           alignItems="flex-start"
         >
