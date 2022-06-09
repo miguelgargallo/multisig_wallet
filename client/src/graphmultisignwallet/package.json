@@ -1,0 +1,16 @@
+{
+  "name": "multisign_wallet",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ multisign_wallet",
+    "create-local": "graph create --node http://localhost:8020/ multisign_wallet",
+    "remove-local": "graph remove --node http://localhost:8020/ multisign_wallet",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 multisign_wallet"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.30.0",
+    "@graphprotocol/graph-ts": "0.27.0"
+  }
+}

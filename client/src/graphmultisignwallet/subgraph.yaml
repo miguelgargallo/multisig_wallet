@@ -1,0 +1,36 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: MultisignWallet
+    network: rinkeby
+    source:
+      address: "0x3006ac7e6A4721933Cdf34D83471f0f755cdf4c8"
+      abi: MultiSignWallet
+      startBlock: 10706882
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - ConfirmTransaction
+        - Deposit
+        - ExecuteTransaction
+        - RevokeConfirmation
+        - SubmitTransaction
+      abis:
+        - name: MultiSignWallet
+          file: ./abis/MultiSignWallet.json
+      eventHandlers:
+        - event: ConfirmTransaction(indexed address,indexed uint256)
+          handler: handleConfirmTransaction
+        - event: Deposit(indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: ExecuteTransaction(indexed address,indexed uint256)
+          handler: handleExecuteTransaction
+        - event: RevokeConfirmation(indexed address,indexed uint256)
+          handler: handleRevokeConfirmation
+        - event: SubmitTransaction(indexed address,indexed uint256,indexed address,uint256,bytes)
+          handler: handleSubmitTransaction
+      file: ./src/multi-sign-wallet.ts

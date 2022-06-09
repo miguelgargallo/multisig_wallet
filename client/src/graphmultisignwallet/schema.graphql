@@ -1,0 +1,33 @@
+type ConfirmTransaction @entity {
+  id: ID!
+  owner: Bytes! # address
+  txIndex: BigInt! # uint256
+}
+
+type Deposit @entity {
+  id: ID!
+  sender: Bytes! # address
+  amount: BigInt! # uint256
+  balance: BigInt! # uint256
+}
+
+type ExecuteTransaction @entity {
+  id: ID!
+  owner: Bytes! # address
+  txIndex: BigInt! # uint256
+}
+
+type RevokeConfirmation @entity {
+  id: ID!
+  owner: Bytes! # address
+  txIndex: BigInt! # uint256
+}
+
+type SubmitTransaction @entity {
+  id: ID!
+  owner: Bytes! # address
+  txIndex: BigInt! # uint256
+  to: Bytes! # address
+  value: BigInt! # uint256
+  data: Bytes! # bytes
+}
