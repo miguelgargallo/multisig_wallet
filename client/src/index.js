@@ -14,11 +14,11 @@ import { publicProvider } from "wagmi/providers/public";
 
 if (!process.env.REACT_APP_ALCHEMY_ID)
   throw new Error(
-    "Missing environment variable REACT_APP_ALCHEMY_ID. Make sure to set your .env file."
+    "Missing environment variable REACT_APP_ALCHEMY_ID.Make sure to set your .env file."
   );
 if (!process.env.REACT_APP_GRAPH_URL)
   throw new Error(
-    "Missing environment variable REACT_APP_GRAPH_URL. Make sure to set your .env file."
+    "Missing environment variable REACT_APP_GRAPH_URL.Make sure to set your .env file."
   );
 
 const { provider, chains } = configureChains(
